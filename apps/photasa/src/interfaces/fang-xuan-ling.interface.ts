@@ -269,9 +269,11 @@ export const ZOUZHE_MATTERS = {
     UPDATE_PREFERENCES: "update_preferences", // 更新偏好设置
     SCAN_FOLDER: "scan_folder", // 扫描文件夹
     GET_STATUS: "get_status", // 获取状态
-    UPDATE_MENU: "update_menu", // ✅ RFC 0058: 更新菜单（长孙无忌 → 房玄龄 → 袁天罡 → 天枢引擎）
-    OPEN_EXTERNAL: "open_external", // ✅ RFC 0058: 打开外部链接（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
-    OPEN_IN_FINDER: "open_in_finder", // ✅ RFC 0058: 在 Finder 中显示文件（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
+    UPDATE_MENU: "update_menu", // ✅ RFC 0058 / 0169: 全量 apply_system_menu 或增量 update_menu_item（直连例外）
+    OPEN_EXTERNAL: "open_external", // ✅ RFC 0058 / 0149: 打开外部链接（直连例外）
+    OPEN_IN_FINDER: "open_in_finder", // ✅ RFC 0058 / 0149: 在 Finder 中显示文件（直连例外）
+    WINDOW_MAXIMIZE_TOGGLE: "window_maximize_toggle", // ✅ RFC 0169: 窗口最大化切换（直连例外）
+    WINDOW_CLOSE: "window_close", // ✅ RFC 0169: 关闭当前窗口（直连例外）
     GET_FOLDER_CONFIG: "get_folder_config", // 获取文件夹配置
     CHECK_FOLDER_CONFIG: "check_folder_config", // 检查文件夹配置是否有效
     FIX_FOLDER_CONFIG: "fix_folder_config", // 修复文件夹配置

@@ -1,20 +1,25 @@
 <template>
     <header class="titlebar-container">
-        <!-- Draggable background handle -->
-        <div class="titlebar-drag-handle" data-tauri-drag-region />
+        <!-- RFC 0152 拖拽层；macOS 菜单走系统菜单栏，不在标题栏内嵌窗口菜单 -->
+        <div
+            class="titlebar-drag-handle"
+            :data-tauri-drag-region="true"
+            :data-testid="TITLEBAR_TEST_ID.DRAG_HANDLE"
+        />
 
-        <!-- Header content layer -->
         <div class="titlebar-content">
-            <!-- Space for macOS native traffic lights (no-drag) -->
             <div class="traffic-placeholder" />
 
-            <!-- Absolutely centered title -->
             <span class="app-title">{{ t("app.title") }}</span>
 
-            <!-- Action buttons area (clickable) -->
-            <div class="setting-header">
+            <div class="setting-header" :data-testid="TITLEBAR_TEST_ID.SETTING_HEADER">
                 <CoffeeOutlined class="system-icon" @click="openScanList" />
                 <ImportOutlined class="system-icon" @click="openImportPhotos" />
+                <ReportIssueOutlined
+                    class="system-icon"
+                    :title="t('menu.help.reportIssue')"
+                    @click="openReportIssueDialog"
+                />
                 <SettingOutlined class="system-icon" @click="openPreference" />
             </div>
         </div>
@@ -27,11 +32,14 @@ import {
     PhClock as CoffeeOutlined,
     PhFolder as ImportOutlined,
     PhGear as SettingOutlined,
+    PhWarningCircle as ReportIssueOutlined,
 } from "@phosphor-icons/vue";
+import { TITLEBAR_TEST_ID } from "./titlebar-drag-contract";
+import { openReportIssueDialog } from "@renderer/services/report-issue-dialog";
 
 const { t } = useI18n();
 
-const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference", "menu-action"]);
+const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference"]);
 
 function openScanList() {
     emit("openScanList");
@@ -72,7 +80,7 @@ function openPreference() {
     height: 100%;
     display: flex;
     align-items: center;
-    pointer-events: none; /* Let clicks pass through to drag handle */
+    pointer-events: none;
 }
 
 .traffic-placeholder {
@@ -93,13 +101,14 @@ function openPreference() {
 }
 
 .setting-header {
-    margin-left: auto; /* Push to far right */
+    margin-left: auto;
     display: flex;
     align-items: center;
     gap: 16px;
     padding-right: 16px;
     height: 100%;
-    pointer-events: auto; /* Re-enable pointer events for buttons */
+    pointer-events: auto;
+    flex-shrink: 0;
 }
 
 .system-icon {

@@ -47,12 +47,12 @@ FolderList.vue
 
 **正确模式**：
 
-| 时机                           | 动作                                                                 |
-| ------------------------------ | -------------------------------------------------------------------- |
-| `currentFolder` / `paths` 变化 | `syncTreeViewForCurrentFolder`（展开祖先 + 选中 + **一次**恢复滚动） |
-| `folderTree.length` 0→N        | 补一次 `scrollRestoredFolderIntoViewOnce`                            |
-| `folderTree` 其它更新          | 仅 `mergeExpandedKeysForCurrentFolder`，**不滚动**                   |
-| 用户 `@expand`                 | `markTreeScrollRestoreComplete()`，禁止后续自动滚                    |
+| 时机                           | 动作                                                                   |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `currentFolder` / `paths` 变化 | `syncTreeViewForCurrentFolder`（展开祖先 + 选中 + **一次**恢复滚动）   |
+| `folderTree.length` 0→N        | 补一次 `scrollRestoredFolderIntoViewOnce`                              |
+| `folderTree` 其它更新          | 深监听：新子目录展开 + `mergeExpandedKeysForCurrentFolder`，**不滚动** |
+| 用户 `@expand`                 | `markTreeScrollRestoreComplete()`，禁止后续自动滚                      |
 
 ### 2. 滚动容器是否唯一？
 
@@ -114,4 +114,6 @@ pnpm --filter @photasa/base-tree exec vitest run
 
 - RFC 0165 Amendment — `.spec/rfc/completed/0165-base-tree-package-and-folder-restore.md`
 - `apps/photasa/src/utils/folder-tree-expand.ts` — 祖先展开纯函数
+- `apps/photasa/src/composables/useFolderListTreeWatchers.ts` — FolderList 全部 `watch()` 逻辑
+- `apps/photasa/src/utils/folder-tree-scroll-restore.ts` — 启动滚动门禁纯函数（可单测）
 - `tauri-debug-investigate` — WebView 内 DOM/日志（若需 MCP 截图验证滚动）

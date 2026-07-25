@@ -301,7 +301,8 @@
             "hide": "إخفاء بيكاسا",
             "hideOthers": "إخفاء الآخرين",
             "unhide": "إظهار الكل",
-            "quit": "خروج"
+            "quit": "خروج",
+            "preferences": "التفضيلات…"
         },
         "view": {
             "menu": "عرض",
@@ -323,9 +324,25 @@
         "help": {
             "menu": "مساعدة",
             "learnMore": "معرفة المزيد",
-            "about": "حول بيكاسا"
+            "about": "حول بيكاسا",
+            "reportIssue": "الإبلاغ عن مشكلة"
         },
-        "separator": "فاصل"
+        "separator": "فاصل",
+        "file": {
+            "menu": "ملف",
+            "import": "استيراد الصور",
+            "addFolder": "إضافة مجلد المكتبة",
+            "scanQueue": "قائمة انتظار المسح"
+        },
+        "edit": {
+            "menu": "تحرير",
+            "undo": "تراجع",
+            "redo": "إعادة",
+            "cut": "قص",
+            "copy": "نسخ",
+            "paste": "لصق",
+            "selectAll": "تحديد الكل"
+        }
     },
     "notification": {
         "info": "معلومات",
@@ -626,5 +643,28 @@
             "savedMessage": "تم تطبيق اختيارك.",
             "errorTitle": "فشل حفظ إعدادات القياس عن بُعد"
         }
+    },
+    "reportIssue": {
+        "title": "الإبلاغ عن مشكلة",
+        "categoryLabel": "الفئة",
+        "category": {
+            "bug": "خلل",
+            "feature": "طلب ميزة",
+            "support": "دعم",
+            "general": "عام"
+        },
+        "titleLabel": "العنوان",
+        "titlePlaceholder": "ملخص موجز للمشكلة",
+        "bodyLabel": "الوصف",
+        "bodyPlaceholder": "خطوات إعادة الإنتاج، السلوك المتوقع مقابل الفعلي…",
+        "emailLabel": "البريد الإلكتروني (اختياري)",
+        "emailPlaceholder": "you@example.com",
+        "submit": "إرسال",
+        "cancel": "إلغاء",
+        "successTitle": "تم إرسال المشكلة",
+        "successMessage": "تم إنشاء issue #{number}.",
+        "openIssue": "عرض على GitHub",
+        "errorTitle": "فشل الإرسال",
+        "errorMessage": "تعذر إرسال المشكلة. يرجى المحاولة لاحقًا."
     }
 }

@@ -301,7 +301,11 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const testPath = "/scan/completed/path";
             const testQizou: Qizou = {
                 matter: "scan_completed",
-                content: { path: testPath },
+                content: {
+                    path: testPath,
+                    parentDir: "",
+                    operationType: "directory",
+                },
                 from: "尉迟恭",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
@@ -314,10 +318,10 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                 setTimeout(() => {
                     expect(weizhengService.receivedShengzhis.length).toBeGreaterThan(0);
                     const shengzhi = weizhengService.receivedShengzhis[0];
-                    expect(shengzhi.command).toBe("add_paths");
+                    expect(shengzhi.command).toBe("scan_completed");
                     const content = shengzhi.content as Record<string, unknown>;
-                    expect(Array.isArray(content.paths)).toBe(true);
-                    expect(content.paths).toContain(testPath);
+                    expect(content.path).toBe(testPath);
+                    expect(content.operationType).toBe("directory");
                     resolve();
                 }, 20);
             });

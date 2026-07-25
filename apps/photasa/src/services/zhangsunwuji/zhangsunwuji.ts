@@ -33,7 +33,27 @@ import type {
     IZhangSunWuJiService,
     MenuActionPayload,
 } from "@renderer/interfaces/zhang-sun-wu-ji.interface";
-import { MENU_KEY_VIEW_FORCE_RELOAD, MENU_KEY_VIEW_RELOAD } from "../../constants/menu-keys";
+import {
+    MENU_KEY_APP_PREFERENCES,
+    MENU_KEY_FILE_ADD_FOLDER,
+    MENU_KEY_FILE_IMPORT,
+    MENU_KEY_FILE_SCAN_QUEUE,
+    MENU_KEY_HELP_ABOUT,
+    MENU_KEY_HELP_REPORT_ISSUE,
+    MENU_KEY_VIEW_FORCE_RELOAD,
+    MENU_KEY_VIEW_RELOAD,
+    MENU_KEY_WINDOW_CLOSE,
+    MENU_KEY_WINDOW_MAXIMIZE,
+} from "../../constants/menu-keys";
+import { openReportIssueDialog } from "../report-issue-dialog";
+import {
+    addLibraryFolderFromMenu,
+    openAboutFromMenu,
+    openImportPhotosFromMenu,
+    openPreferenceFromMenu,
+    openScanListFromMenu,
+} from "../menu-app-handlers";
+import { findMenuItemByKey } from "@renderer/utils/find-menu-item-by-key";
 import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
 import {
     ZOUZHE_MATTERS,
@@ -160,8 +180,8 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
             priority: ZOUZHE_PRIORITIES.NORMAL,
         };
 
-        this.fangXuanLingService.processZouzhe(zouzhe).catch((error) => {
-            logger.error("📋 长孙无忌：发送 UPDATE_MENU zouzhe 失败", error);
+        void this.fangXuanLingService.processZouzhe(zouzhe).catch((error) => {
+            logger.error("📋 长孙无忌：UPDATE_MENU 全量刷新失败，系统菜单栏可能未更新", error);
         });
     }
 
@@ -178,12 +198,13 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
         // 1. 更新 menusStore（通过房玄龄的 accessor）
         this.fangXuanLingService.menus.setMenuDisabled(key, disabled);
 
-        // 2. 发送 UPDATE_MENU zouzhe 到房玄龄
+        // 2. 发送 UPDATE_MENU zouzhe（增量 update_menu_item，RFC 0169）
         const zouzhe: Zouzhe = {
             department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
             matter: ZOUZHE_MATTERS.UPDATE_MENU,
             content: {
-                menus: this.fangXuanLingService.menus.menus,
+                key,
+                disabled,
             },
             timestamp: Date.now(),
             priority: ZOUZHE_PRIORITIES.NORMAL,
@@ -218,7 +239,6 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
         logger.info(`📋 长孙无忌：收到菜单点击事件，处理 ${payload.key}`);
 
         try {
-            // 0. 重新加载：Tauri 系统菜单仅回传 `key`（无 role），须在此显式 invoke（RFC 0099）
             if (
                 payload.key === MENU_KEY_VIEW_RELOAD ||
                 payload.key === MENU_KEY_VIEW_FORCE_RELOAD
@@ -237,6 +257,66 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
                 return;
             }
 
+            if (payload.key === MENU_KEY_HELP_REPORT_ISSUE) {
+                openReportIssueDialog();
+                return;
+            }
+
+            if (payload.key === MENU_KEY_HELP_ABOUT) {
+                openAboutFromMenu();
+                return;
+            }
+
+            if (payload.key === MENU_KEY_APP_PREFERENCES) {
+                openPreferenceFromMenu();
+                return;
+            }
+
+            if (payload.key === MENU_KEY_FILE_IMPORT) {
+                openImportPhotosFromMenu();
+                return;
+            }
+
+            if (payload.key === MENU_KEY_FILE_ADD_FOLDER) {
+                addLibraryFolderFromMenu();
+                return;
+            }
+
+            if (payload.key === MENU_KEY_FILE_SCAN_QUEUE) {
+                openScanListFromMenu();
+                return;
+            }
+
+            if (payload.key === MENU_KEY_WINDOW_MAXIMIZE) {
+                void this.fangXuanLingService
+                    .processZouzhe({
+                        department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
+                        matter: ZOUZHE_MATTERS.WINDOW_MAXIMIZE_TOGGLE,
+                        content: {},
+                        timestamp: Date.now(),
+                        priority: ZOUZHE_PRIORITIES.NORMAL,
+                    })
+                    .catch((err: unknown) => {
+                        logger.error("📋 长孙无忌：窗口最大化切换失败", err);
+                    });
+                return;
+            }
+
+            if (payload.key === MENU_KEY_WINDOW_CLOSE) {
+                void this.fangXuanLingService
+                    .processZouzhe({
+                        department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
+                        matter: ZOUZHE_MATTERS.WINDOW_CLOSE,
+                        content: {},
+                        timestamp: Date.now(),
+                        priority: ZOUZHE_PRIORITIES.NORMAL,
+                    })
+                    .catch((err: unknown) => {
+                        logger.error("📋 长孙无忌：关闭窗口失败", err);
+                    });
+                return;
+            }
+
             // 1. 有 role 的菜单项：由 contract reference 自动处理，无需额外操作
             if (payload.role) {
                 logger.debug(
@@ -246,9 +326,10 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
             }
 
             // 2. 有 url 的菜单项：打开外部链接（通过 qizou 流程）
-            if (payload.url) {
-                logger.info(`📋 长孙无忌：需打开外部链接 ${payload.url}，启奏袁天罡处理`);
-                this.openExternal(payload.url);
+            const menuUrl = payload.url ?? findMenuItemByKey(this.menus, payload.key)?.url;
+            if (menuUrl) {
+                logger.info(`📋 长孙无忌：需打开外部链接 ${menuUrl}，启奏袁天罡处理`);
+                this.openExternal(menuUrl);
                 return;
             }
 

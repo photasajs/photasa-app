@@ -1,8 +1,19 @@
 import type { MenuItemData } from "@photasa/common";
-import { MENU_KEY_VIEW_FORCE_RELOAD, MENU_KEY_VIEW_RELOAD } from "../../constants/menu-keys";
+import {
+    MENU_KEY_APP_PREFERENCES,
+    MENU_KEY_FILE_ADD_FOLDER,
+    MENU_KEY_FILE_IMPORT,
+    MENU_KEY_FILE_SCAN_QUEUE,
+    MENU_KEY_HELP_ABOUT,
+    MENU_KEY_HELP_REPORT_ISSUE,
+    MENU_KEY_VIEW_FORCE_RELOAD,
+    MENU_KEY_VIEW_RELOAD,
+    MENU_KEY_WINDOW_CLOSE,
+    MENU_KEY_WINDOW_MAXIMIZE,
+} from "../../constants/menu-keys";
 
 export const SystemMenus: readonly MenuItemData[] = Object.freeze([
-    // macOS 专属 appMenu
+    // macOS 专属 appMenu（RFC 0169: 增加 Preferences）
     {
         key: "app",
         label: "menu.app.menu",
@@ -11,6 +22,17 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
             { key: "app.about", label: "menu.app.about", role: "about" },
             {
                 key: "app.separator-1",
+                label: "menu.separator",
+                role: "separator",
+                type: "separator",
+            },
+            {
+                key: MENU_KEY_APP_PREFERENCES,
+                label: "menu.app.preferences",
+                shortcut: "CmdOrCtrl+,",
+            },
+            {
+                key: "app.separator-prefs",
                 label: "menu.separator",
                 role: "separator",
                 type: "separator",
@@ -32,6 +54,68 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
                 type: "separator",
             },
             { key: "app.quit", label: "menu.app.quit", role: "quit" },
+        ],
+    },
+    // File 菜单（RFC 0169: Photasa 领域操作）
+    {
+        key: "file",
+        label: "menu.file.menu",
+        items: [
+            {
+                key: MENU_KEY_FILE_IMPORT,
+                label: "menu.file.import",
+                shortcut: "CmdOrCtrl+I",
+            },
+            {
+                key: MENU_KEY_FILE_ADD_FOLDER,
+                label: "menu.file.addFolder",
+                shortcut: "CmdOrCtrl+Shift+O",
+            },
+            {
+                key: "file-separator-1",
+                label: "menu.separator",
+                role: "separator",
+                type: "separator",
+            },
+            {
+                key: MENU_KEY_FILE_SCAN_QUEUE,
+                label: "menu.file.scanQueue",
+            },
+        ],
+    },
+    // Edit 菜单（RFC 0169: 标准 role，激活 role_to_predefined）
+    {
+        key: "edit",
+        label: "menu.edit.menu",
+        items: [
+            { key: "edit-undo", label: "menu.edit.undo", role: "undo", shortcut: "CmdOrCtrl+Z" },
+            {
+                key: "edit-redo",
+                label: "menu.edit.redo",
+                role: "redo",
+                shortcut: "CmdOrCtrl+Shift+Z",
+            },
+            {
+                key: "edit-separator-1",
+                label: "menu.separator",
+                role: "separator",
+                type: "separator",
+            },
+            { key: "edit-cut", label: "menu.edit.cut", role: "cut", shortcut: "CmdOrCtrl+X" },
+            { key: "edit-copy", label: "menu.edit.copy", role: "copy", shortcut: "CmdOrCtrl+C" },
+            { key: "edit-paste", label: "menu.edit.paste", role: "paste", shortcut: "CmdOrCtrl+V" },
+            {
+                key: "edit-separator-2",
+                label: "menu.separator",
+                role: "separator",
+                type: "separator",
+            },
+            {
+                key: "edit-select-all",
+                label: "menu.edit.selectAll",
+                role: "selectAll",
+                shortcut: "CmdOrCtrl+A",
+            },
         ],
     },
     // View 菜单
@@ -78,7 +162,7 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
             },
         ],
     },
-    // Window 菜单
+    // Window 菜单（RFC 0169: maximize/close 无 role，走 handleMenuAction）
     {
         key: "window",
         label: "menu.window.menu",
@@ -89,21 +173,39 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
                 role: "minimize",
                 shortcut: "Ctrl+M",
             },
-            { key: "window-maximize", label: "menu.window.maximize", shortcut: "Ctrl+Shift+M" },
-            { key: "window-close", label: "menu.window.close", shortcut: "Ctrl+W" },
+            {
+                key: MENU_KEY_WINDOW_MAXIMIZE,
+                label: "menu.window.maximize",
+                shortcut: "Ctrl+Shift+M",
+            },
+            {
+                key: MENU_KEY_WINDOW_CLOSE,
+                label: "menu.window.close",
+                shortcut: "Ctrl+W",
+            },
         ],
     },
-    // Help 菜单
+    // Help 菜单（Report Issue 置顶，避免 macOS Help 自动合并时中间项丢失）
     {
         key: "help",
         label: "menu.help.menu",
         items: [
             {
+                key: MENU_KEY_HELP_REPORT_ISSUE,
+                label: "menu.help.reportIssue",
+            },
+            {
+                key: "help-separator-1",
+                label: "menu.separator",
+                role: "separator",
+                type: "separator",
+            },
+            {
                 key: "help-learn-more",
                 label: "menu.help.learnMore",
                 url: "https://photasa.me",
             },
-            { key: "help-about", label: "menu.help.about", shortcut: "F1" },
+            { key: MENU_KEY_HELP_ABOUT, label: "menu.help.about", shortcut: "F1" },
         ],
     },
 ]);

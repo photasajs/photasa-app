@@ -403,7 +403,8 @@
             "hide": "隐藏仓廪图司",
             "hideOthers": "隐藏其他",
             "unhide": "显示全部",
-            "quit": "退出"
+            "quit": "退出",
+            "preferences": "偏好设置…"
         },
         "view": {
             "menu": "视图",
@@ -425,9 +426,25 @@
         "help": {
             "menu": "帮助",
             "learnMore": "了解更多",
-            "about": "关于仓廪图司"
+            "about": "关于仓廪图司",
+            "reportIssue": "报告问题"
         },
-        "separator": "分隔符"
+        "separator": "分隔符",
+        "file": {
+            "menu": "文件",
+            "import": "导入照片",
+            "addFolder": "添加图库文件夹",
+            "scanQueue": "扫描队列"
+        },
+        "edit": {
+            "menu": "编辑",
+            "undo": "撤销",
+            "redo": "重做",
+            "cut": "剪切",
+            "copy": "复制",
+            "paste": "粘贴",
+            "selectAll": "全选"
+        }
     },
     "notification": {
         "info": "提示",
@@ -739,5 +756,28 @@
             "savedMessage": "您的选择已生效。",
             "errorTitle": "遥测设置失败"
         }
+    },
+    "reportIssue": {
+        "title": "报告问题",
+        "categoryLabel": "类别",
+        "category": {
+            "bug": "缺陷",
+            "feature": "功能建议",
+            "support": "支持",
+            "general": "一般"
+        },
+        "titleLabel": "标题",
+        "titlePlaceholder": "简要描述问题",
+        "bodyLabel": "详细说明",
+        "bodyPlaceholder": "复现步骤、期望与实际行为…",
+        "emailLabel": "邮箱（可选）",
+        "emailPlaceholder": "you@example.com",
+        "submit": "提交",
+        "cancel": "取消",
+        "successTitle": "问题已提交",
+        "successMessage": "感谢反馈！已创建 Issue #{number}。",
+        "openIssue": "在 GitHub 查看",
+        "errorTitle": "提交失败",
+        "errorMessage": "无法提交问题，请稍后重试。"
     }
 }

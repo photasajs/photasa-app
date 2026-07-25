@@ -4,6 +4,7 @@ import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { YuanTianGangService } from "../yuantiangang";
 import {
     FOLDER_TREE_COMMANDS,
+    MENU_COMMANDS,
     PREFERENCES_COMMANDS,
     SCAN_QUEUE_COMMANDS,
     WATCH_COMMANDS,
@@ -12,6 +13,7 @@ import {
 import { SCAN_QUEUE_RESTORE_FROM_DISK } from "../scan-queue-contract";
 
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
+import { MENU_KEY_HELP_REPORT_ISSUE } from "@renderer/constants/menu-keys";
 
 const mockInvoke = vi.fn();
 const mockListen = vi.fn();
@@ -57,6 +59,23 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
 
     it("Tauri 模式下 menu:action 直连 listen(picasa:menu-action)（RFC 0149）", () => {
         expect(mockListen).toHaveBeenCalledWith("picasa:menu-action", expect.any(Function));
+    });
+
+    it("help-report-issue menu click emits MENU_ACTION qizou with stable key", () => {
+        const listenCall = mockListen.mock.calls.find((call) => call[0] === "picasa:menu-action");
+        expect(listenCall).toBeDefined();
+
+        const handler = listenCall![1] as (event: { payload: { key: string } }) => void;
+        handler({ payload: { key: MENU_KEY_HELP_REPORT_ISSUE } });
+
+        expect(mockQizouEmit).toHaveBeenCalledWith(
+            "qizou",
+            expect.objectContaining({
+                matter: QizouMatters.MENU_ACTION,
+                content: expect.objectContaining({ key: MENU_KEY_HELP_REPORT_ISSUE }),
+                from: "袁天罡",
+            }),
+        );
     });
 
     it("Tauri 模式下 picasa:add-to-scan-queue 直连 listen（RFC 0137）", () => {
@@ -404,7 +423,63 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
             requiresTianshuApproval: true,
         });
 
-        expect(mockInvoke).toHaveBeenCalledWith("apply_system_menu", { menus });
+        expect(mockInvoke).toHaveBeenCalledWith(MENU_COMMANDS.APPLY, { menus });
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("UPDATE_MENU with key invokes update_menu_item（RFC 0169）", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.UPDATE_MENU,
+            context: { key: "file-import", disabled: true },
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith(MENU_COMMANDS.UPDATE_ITEM, {
+            key: "file-import",
+            disabled: true,
+            label: undefined,
+        });
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("WINDOW_MAXIMIZE_TOGGLE toggles maximize state（RFC 0169）", async () => {
+        mockInvoke.mockImplementation((cmd: string) => {
+            if (cmd === "is_maximized") return Promise.resolve(false);
+            return Promise.resolve(undefined);
+        });
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.WINDOW_MAXIMIZE_TOGGLE,
+            context: {},
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("is_maximized");
+        expect(mockInvoke).toHaveBeenCalledWith("maximize_window");
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("WINDOW_CLOSE invokes close_window（RFC 0169）", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.WINDOW_CLOSE,
+            context: {},
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("close_window");
         expect(result.acknowledged).toBe(true);
     });
 

@@ -4,26 +4,7 @@
         <AppIcon />
         <!-- 标题 -->
         <span class="title-text" data-tauri-drag-region>{{ t("app.title") }}</span>
-        <!-- 菜单栏（横向一级菜单） -->
-        <nav class="menu-bar no-drag-region" ref="menuBarRef">
-            <div
-                v-for="menu in filteredMenus"
-                :key="menu.key"
-                class="menu-item no-drag-region"
-                :class="{ active: activeMenuKey === menu.key }"
-                @click.stop="onMenuClick(menu.key)"
-                @mouseenter="onMenuHover(menu.key)"
-            >
-                {{ menu.label }}
-                <!-- 下拉子菜单，仅当前激活菜单显示 -->
-                <MenuDropdown
-                    v-if="activeMenuKey === menu.key && menu.items"
-                    :items="menu.items"
-                    class="dropdown-root"
-                    @menu-action="activeMenuKey = null"
-                />
-            </div>
-        </nav>
+        <TitlebarMenuBar class="no-drag-region" />
         <!-- 设置按钮区（no-drag） -->
 
         <!-- 窗口控制按钮区（no-drag） -->
@@ -31,6 +12,11 @@
             <BaseSpace class="setting-header no-drag-region">
                 <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
                 <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
+                <ReportIssueOutlined
+                    class="system-icon"
+                    :title="t('menu.help.reportIssue')"
+                    @click="openReportIssueDialog"
+                />
                 <SettingOutlined class="system-icon" @click="openPreference" />
             </BaseSpace>
             <!-- 最小化 -->
@@ -102,15 +88,14 @@ import {
     PhClock as CoffeeOutlined,
     PhFolder as ImportOutlined,
     PhGear as SettingOutlined,
+    PhWarningCircle as ReportIssueOutlined,
 } from "@phosphor-icons/vue";
 import { useI18n } from "vue-i18n";
-import { onClickOutside } from "@vueuse/core";
-import { ref, onMounted, onBeforeUnmount, computed } from "vue";
-import { storeToRefs } from "pinia";
-import { useMenusStore } from "@renderer/stores/menus";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { BaseSpace } from "@renderer/components/ui";
-import MenuDropdown from "./common/MenuDropdown.vue";
+import TitlebarMenuBar from "./TitlebarMenuBar.vue";
 import { useYuanTianGang } from "@renderer/composables/useYuanTianGang";
+import { openReportIssueDialog } from "@renderer/services/report-issue-dialog";
 const { t } = useI18n();
 const windows = useYuanTianGang().windows;
 let windowCleanups: Array<() => void> = [];
@@ -159,33 +144,6 @@ onBeforeUnmount(() => {
     windowCleanups.forEach((cleanup) => cleanup());
     windowCleanups = [];
 });
-
-// menus store 响应式菜单栏
-const menusStore = useMenusStore();
-const { menus } = storeToRefs(menusStore);
-
-// 当前激活的一级菜单 key，决定 dropdown 是否显示及内容
-const activeMenuKey = ref<string | null>(null);
-// 一级菜单栏 ref
-const menuBarRef = ref<HTMLElement | null>(null);
-
-const filteredMenus = computed(() => menus.value.filter((menu) => !menu.isMacOnly));
-
-// 点击一级菜单按钮，切换下拉菜单显示/隐藏
-// 若已激活则关闭，否则激活并显示对应 dropdown
-function onMenuClick(menuKey: string) {
-    activeMenuKey.value = activeMenuKey.value === menuKey ? null : menuKey;
-}
-// 主菜单项 hover 时，仅在 dropdown 已打开时切换 activeMenuKey，实现“点击后 hover 切换内容”
-function onMenuHover(menuKey: string) {
-    if (activeMenuKey.value !== null) {
-        activeMenuKey.value = menuKey;
-    }
-}
-// 点击菜单栏外部关闭所有下拉菜单
-onClickOutside(menuBarRef, () => {
-    activeMenuKey.value = null;
-});
 </script>
 
 <style scoped lang="less">
@@ -210,40 +168,6 @@ onClickOutside(menuBarRef, () => {
     font-size: 1.1em;
     margin: 0 12px 0 0;
     user-select: none;
-}
-.menu-bar {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    margin: 0 16px;
-    position: relative;
-}
-.menu-item {
-    padding: 0 16px;
-    cursor: pointer;
-    user-select: none;
-    color: var(--color-text);
-    transition:
-        background 0.2s,
-        color 0.2s;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    position: relative;
-    &:hover {
-        background: var(--color-primary);
-        color: var(--color-white);
-    }
-    &.active {
-        background: var(--color-primary);
-        color: var(--color-white);
-    }
-    .dropdown-root {
-        position: absolute;
-        left: 0;
-        top: 100%;
-        z-index: 9999;
-    }
 }
 .window-controls {
     display: flex;

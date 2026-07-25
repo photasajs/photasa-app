@@ -301,7 +301,8 @@
             "hide": "Photasa'yı Gizle",
             "hideOthers": "Diğerlerini Gizle",
             "unhide": "Tümünü Göster",
-            "quit": "Çıkış"
+            "quit": "Çıkış",
+            "preferences": "Tercihler…"
         },
         "view": {
             "menu": "Görünüm",
@@ -323,9 +324,25 @@
         "help": {
             "menu": "Yardım",
             "learnMore": "Daha Fazla Bilgi",
-            "about": "Photasa Hakkında"
+            "about": "Photasa Hakkında",
+            "reportIssue": "Sorun bildir"
         },
-        "separator": "Ayırıcı"
+        "separator": "Ayırıcı",
+        "file": {
+            "menu": "Dosya",
+            "import": "Fotoğrafları içe aktar",
+            "addFolder": "Kitaplık klasörü ekle",
+            "scanQueue": "Tarama kuyruğu"
+        },
+        "edit": {
+            "menu": "Düzen",
+            "undo": "Geri al",
+            "redo": "Yinele",
+            "cut": "Kes",
+            "copy": "Kopyala",
+            "paste": "Yapıştır",
+            "selectAll": "Tümünü seç"
+        }
     },
     "notification": {
         "info": "Bilgi",
@@ -626,5 +643,28 @@
             "savedMessage": "Seçiminiz uygulandı.",
             "errorTitle": "Telemetri ayarları kaydedilemedi"
         }
+    },
+    "reportIssue": {
+        "title": "Sorun bildir",
+        "categoryLabel": "Kategori",
+        "category": {
+            "bug": "Hata",
+            "feature": "Özellik isteği",
+            "support": "Destek",
+            "general": "Genel"
+        },
+        "titleLabel": "Başlık",
+        "titlePlaceholder": "Sorunun kısa özeti",
+        "bodyLabel": "Açıklama",
+        "bodyPlaceholder": "Yeniden üretme adımları, beklenen ve gerçek davranış…",
+        "emailLabel": "E-posta (isteğe bağlı)",
+        "emailPlaceholder": "you@example.com",
+        "submit": "Gönder",
+        "cancel": "İptal",
+        "successTitle": "Sorun gönderildi",
+        "successMessage": "Issue #{number} oluşturuldu.",
+        "openIssue": "GitHub’da görüntüle",
+        "errorTitle": "Gönderim başarısız",
+        "errorMessage": "Sorun gönderilemedi. Lütfen daha sonra tekrar deneyin."
     }
 }

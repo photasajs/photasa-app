@@ -301,7 +301,8 @@
             "hide": "Сховати Photasa",
             "hideOthers": "Сховати інші",
             "unhide": "Показати все",
-            "quit": "Вийти"
+            "quit": "Вийти",
+            "preferences": "Налаштування…"
         },
         "view": {
             "menu": "Вигляд",
@@ -323,9 +324,25 @@
         "help": {
             "menu": "Довідка",
             "learnMore": "Дізнатися більше",
-            "about": "Про Photasa"
+            "about": "Про Photasa",
+            "reportIssue": "Повідомити про проблему"
         },
-        "separator": "Роздільник"
+        "separator": "Роздільник",
+        "file": {
+            "menu": "Файл",
+            "import": "Імпорт фотографій",
+            "addFolder": "Додати папку бібліотеки",
+            "scanQueue": "Черга сканування"
+        },
+        "edit": {
+            "menu": "Редагування",
+            "undo": "Скасувати",
+            "redo": "Повторити",
+            "cut": "Вирізати",
+            "copy": "Копіювати",
+            "paste": "Вставити",
+            "selectAll": "Вибрати все"
+        }
     },
     "notification": {
         "info": "Інформація",
@@ -626,5 +643,28 @@
             "savedMessage": "Ваш вибір застосовано.",
             "errorTitle": "Не вдалося зберегти налаштування телеметрії"
         }
+    },
+    "reportIssue": {
+        "title": "Повідомити про проблему",
+        "categoryLabel": "Категорія",
+        "category": {
+            "bug": "Помилка",
+            "feature": "Запит функції",
+            "support": "Підтримка",
+            "general": "Загальне"
+        },
+        "titleLabel": "Заголовок",
+        "titlePlaceholder": "Короткий опис проблеми",
+        "bodyLabel": "Опис",
+        "bodyPlaceholder": "Кроки відтворення, очікувана та фактична поведінка…",
+        "emailLabel": "Email (необов’язково)",
+        "emailPlaceholder": "you@example.com",
+        "submit": "Надіслати",
+        "cancel": "Скасувати",
+        "successTitle": "Проблему надіслано",
+        "successMessage": "Створено issue #{number}.",
+        "openIssue": "Переглянути на GitHub",
+        "errorTitle": "Не вдалося надіслати",
+        "errorMessage": "Не вдалося надіслати проблему. Спробуйте пізніше."
     }
 }

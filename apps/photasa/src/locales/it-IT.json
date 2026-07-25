@@ -298,7 +298,8 @@
             "hide": "Nascondi Photasa",
             "hideOthers": "Nascondi altri",
             "unhide": "Mostra tutto",
-            "quit": "Esci"
+            "quit": "Esci",
+            "preferences": "Preferenze…"
         },
         "view": {
             "menu": "Visualizza",
@@ -320,9 +321,25 @@
         "help": {
             "menu": "Aiuto",
             "learnMore": "Scopri di più",
-            "about": "Informazioni su Photasa"
+            "about": "Informazioni su Photasa",
+            "reportIssue": "Segnala un problema"
         },
-        "separator": "Separatore"
+        "separator": "Separatore",
+        "file": {
+            "menu": "File",
+            "import": "Importa foto",
+            "addFolder": "Aggiungi cartella libreria",
+            "scanQueue": "Coda di scansione"
+        },
+        "edit": {
+            "menu": "Modifica",
+            "undo": "Annulla",
+            "redo": "Ripeti",
+            "cut": "Taglia",
+            "copy": "Copia",
+            "paste": "Incolla",
+            "selectAll": "Seleziona tutto"
+        }
     },
     "notification": {
         "info": "Informazione",
@@ -623,5 +640,28 @@
             "savedMessage": "La scelta è stata applicata.",
             "errorTitle": "Impossibile salvare le impostazioni di telemetria"
         }
+    },
+    "reportIssue": {
+        "title": "Segnala un problema",
+        "categoryLabel": "Categoria",
+        "category": {
+            "bug": "Bug",
+            "feature": "Richiesta funzione",
+            "support": "Supporto",
+            "general": "Generale"
+        },
+        "titleLabel": "Titolo",
+        "titlePlaceholder": "Breve riepilogo del problema",
+        "bodyLabel": "Descrizione",
+        "bodyPlaceholder": "Passaggi per riprodurre, comportamento atteso vs reale…",
+        "emailLabel": "Email (opzionale)",
+        "emailPlaceholder": "you@example.com",
+        "submit": "Invia",
+        "cancel": "Annulla",
+        "successTitle": "Problema inviato",
+        "successMessage": "Issue #{number} creata.",
+        "openIssue": "Vedi su GitHub",
+        "errorTitle": "Invio non riuscito",
+        "errorMessage": "Impossibile inviare il problema. Riprova più tardi."
     }
 }

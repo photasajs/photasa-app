@@ -26,6 +26,7 @@ import { canonicalFolderPath } from "@renderer/utils/folder-tree-path";
 import { isSameFolderTree } from "@renderer/utils/folder-tree-compare";
 import { createGalleryMediaOperations } from "./gallery-media";
 import type { IGalleryMediaOperations } from "@renderer/interfaces/wei-zheng.interface";
+import { shouldRefreshFolderConfigAfterFileScan } from "@renderer/utils/scan-watch-sync";
 
 const logger = loggers.weizheng;
 
@@ -202,6 +203,9 @@ export class WeiZhengService implements IService, IWeiZhengService {
                 case ShengzhiCommands.ADD_PATHS:
                     await this.handleAddPaths(shengzhi);
                     break;
+                case ShengzhiCommands.SCAN_COMPLETED:
+                    await this.handleScanCompleted(shengzhi);
+                    break;
                 case ShengzhiCommands.UPDATE_FOLDER_TREE:
                     await this.handleUpdateFolderTree(shengzhi);
                     break;
@@ -350,6 +354,60 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
         await this.persistFolderTreeIfChanged(currentTree, newTree);
         logger.info(`🏛️ 魏征：批量添加完成，共${paths.length}个路径`);
+    }
+
+    /**
+     * 扫描完成：目录更新 folderTree；文件刷新当前目录 photoList（watch 实时 UI）
+     */
+    private async handleScanCompleted(shengzhi: Shengzhi): Promise<void> {
+        const content = shengzhi.content as Record<string, unknown>;
+        const operationType = content?.operationType as string | undefined;
+        const parentDir =
+            typeof content?.parentDir === "string" ? canonicalFolderPath(content.parentDir) : null;
+        const scanPath = typeof content?.path === "string" ? canonicalFolderPath(content.path) : "";
+
+        if (operationType === "file") {
+            if (parentDir) {
+                await this.handleAddPaths({
+                    ...shengzhi,
+                    content: { paths: [parentDir] },
+                });
+            }
+            await this.refreshFolderConfigIfCurrent(parentDir);
+            logger.info(`🏛️ 魏征：文件监视扫描完成，已同步父目录 UI ${parentDir ?? scanPath}`);
+            return;
+        }
+
+        if (!scanPath) {
+            logger.warn("🏛️ 魏征：scan_completed 缺少 path，跳过");
+            return;
+        }
+
+        await this.handleAddPaths({
+            ...shengzhi,
+            content: { paths: [scanPath] },
+        });
+    }
+
+    /**
+     * 当前正在查看的文件夹配置从磁盘重载（ImageList 立即显示新增/删除后的 photoList）
+     */
+    private async refreshFolderConfigIfCurrent(folderPath: string | null): Promise<void> {
+        const normalizedFolder = folderPath ? canonicalFolderPath(folderPath) : "";
+        if (
+            !normalizedFolder ||
+            !shouldRefreshFolderConfigAfterFileScan(this.currentFolder, normalizedFolder)
+        ) {
+            return;
+        }
+
+        const config = await this.getFolderConfig(normalizedFolder);
+        if (!config) {
+            return;
+        }
+
+        this.fangXuanLingService.preference.replaceCurrentFolderConfig(normalizedFolder, config);
+        logger.debug(`🏛️ 魏征：已刷新当前文件夹配置 ${normalizedFolder}`);
     }
 
     /**

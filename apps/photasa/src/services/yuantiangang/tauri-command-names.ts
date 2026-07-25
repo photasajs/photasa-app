@@ -26,11 +26,21 @@ export const SHELL_COMMANDS = {
 
 export const MENU_COMMANDS = {
     APPLY: "apply_system_menu",
+    UPDATE_ITEM: "update_menu_item",
+} as const;
+
+export const WINDOW_COMMANDS = {
+    MINIMIZE: "minimize_window",
+    MAXIMIZE: "maximize_window",
+    UNMAXIMIZE: "unmaximize_window",
+    CLOSE: "close_window",
+    IS_MAXIMIZED: "is_maximized",
 } as const;
 
 /** RFC 0137：文件监视合并批次事件（Rust photasa-watch → 前端） */
 export const WATCH_EVENTS = {
     SCAN_QUEUE_ADD: "picasa:add-to-scan-queue",
+    FILE_ADD_DIR: "picasa:file-add-dir",
     FILE_UNLINK: "picasa:file-unlink",
     DIRECTORY_UNLINK: "picasa:file-unlink-dir",
 } as const;

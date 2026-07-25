@@ -16,6 +16,7 @@ import { ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import type { FileOperation, ScanAction } from "@photasa/common";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import { loggers, mapFileOperationToScanAction } from "@photasa/common";
+import { resolveScanStartedTreePath } from "@renderer/utils/scan-watch-sync";
 import { normalizePath } from "@renderer/utils/path";
 import {
     calculateTaskAge,
@@ -133,8 +134,21 @@ export class YuChiGongService implements IService, IYuChiGongService {
         // 1. ✅ RFC 0048 v3: pending → processing
         await this.updateTaskStatus(path, "processing", { startedAt: Date.now() });
 
-        // 2. 启奏开始
-        this.emitQizou("scan_started", { path });
+        // 2. 文件操作先解析父目录，scan_started 只写入目录路径到 folderTree
+        let parentDir: string | null = null;
+        if (operationType === "file") {
+            const res = await this.fangXuanLingService.processZouzhe({
+                department: GUANYUAN_NAMES.YU_CHI_GONG,
+                matter: ZOUZHE_MATTERS.TO_DIR_NAME,
+                content: { path },
+                timestamp: Date.now(),
+                priority: ZOUZHE_PRIORITIES.NORMAL,
+            });
+            parentDir = typeof res.data === "string" ? res.data : null;
+        }
+
+        const treePath = resolveScanStartedTreePath(path, operationType, parentDir);
+        this.emitQizou("scan_started", { path: treePath });
 
         try {
             // 3. 重扫描时重置配置
@@ -148,20 +162,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 });
             }
 
-            // 4. 文件操作 - 记录父目录
-            let parentDir: string | null = null;
-            if (operationType === "file") {
-                const res = await this.fangXuanLingService.processZouzhe({
-                    department: GUANYUAN_NAMES.YU_CHI_GONG,
-                    matter: ZOUZHE_MATTERS.TO_DIR_NAME,
-                    content: { path },
-                    timestamp: Date.now(),
-                    priority: ZOUZHE_PRIORITIES.NORMAL,
-                });
-                parentDir = typeof res.data === "string" ? res.data : null;
-            }
-
-            // 5. 执行扫描（子目录发现由千里眼 ScanDirectoryReport → scan_directory_discovered，RFC 0136）
+            // 4. 执行扫描（子目录发现由千里眼 ScanDirectoryReport → scan_directory_discovered，RFC 0136）
             await this.fangXuanLingService.processZouzhe({
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.SCAN_PHOTOS,
