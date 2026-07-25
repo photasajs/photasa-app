@@ -4,63 +4,63 @@ import { YuanTianGangService } from "../yuantiangang";
 import { QizouMatters } from "../../../constants/qizou-shengzhi-commands";
 
 const mockTauriInvoke = vi.hoisted(() => vi.fn());
-const mockScanAdapterOn = vi.hoisted(() => vi.fn());
+const mockListen = vi.hoisted(() => vi.fn());
 
 vi.mock("@tauri-apps/api/core", () => ({
     invoke: (...args: unknown[]) => mockTauriInvoke(...args),
-    listen: vi.fn().mockResolvedValue(() => {}),
 }));
 
-vi.mock("@renderer/api/scan.adapter", () => ({
-    scanAdapter: {
-        onScanResult: (callback: (result: unknown) => void) => {
-            mockScanAdapterOn(callback);
-            return Promise.resolve(() => {});
-        },
-    },
+vi.mock("@tauri-apps/api/event", () => ({
+    listen: (...args: unknown[]) => mockListen(...args),
 }));
 
 vi.mock("@renderer/api/env", () => ({
     isTauri: () => true,
 }));
 
+function getFindPhotoHandler(): ((event: { payload: unknown }) => void) | null {
+    const listenCall = mockListen.mock.calls.find((call) => call[0] === "picasa:find-photo");
+    return listenCall ? (listenCall[1] as (event: { payload: unknown }) => void) : null;
+}
+
 describe("YuanTianGangService - Scan Events & Status Bar Progress", () => {
     let yuanTianGang: YuanTianGangService;
     let qizouBus: ReturnType<typeof mitt>;
-    let emittedEvents: any[];
+    let emittedEvents: Array<{ matter: string; content: Record<string, unknown> }>;
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mockListen.mockResolvedValue(() => {});
         emittedEvents = [];
         qizouBus = mitt();
-        qizouBus.on("qizou" as any, (event: any) => {
-            emittedEvents.push(event);
-        });
+        qizouBus.on(
+            "qizou" as never,
+            (event: { matter: string; content: Record<string, unknown> }) => {
+                emittedEvents.push(event);
+            },
+        );
 
         yuanTianGang = new YuanTianGangService();
-        yuanTianGang.setQizouBus(qizouBus as any);
+        yuanTianGang.setQizouBus(qizouBus as never);
     });
 
     it("RFC 0136: 接收 ScanFileReport 并将完整文件路径与根路径解析给 qizou SCAN_PROGRESS", () => {
-        let callback: ((result: unknown) => void) | null = null;
-        if (mockScanAdapterOn.mock.calls.length > 0) {
-            callback = mockScanAdapterOn.mock.calls[mockScanAdapterOn.mock.calls.length - 1][0];
-        }
+        const handler = getFindPhotoHandler();
+        expect(handler).not.toBeNull();
 
-        expect(callback).not.toBeNull();
-
-        // 模拟 Tauri 触发 ScanFileReport 事件
-        callback!({
-            type: "file",
-            requestId: "req-1",
-            rootPath: "/Volumes/SUCAI/Test",
-            file: {
-                path: "/Volumes/SUCAI/Test/sub/photo.jpg",
-                isDirectory: false,
-            },
-            progress: {
-                processed: 3,
-                total: 10,
+        handler!({
+            payload: {
+                type: "file",
+                requestId: "req-1",
+                rootPath: "/Volumes/SUCAI/Test",
+                file: {
+                    path: "/Volumes/SUCAI/Test/sub/photo.jpg",
+                    isDirectory: false,
+                },
+                progress: {
+                    processed: 3,
+                    total: 10,
+                },
             },
         });
 
@@ -74,21 +74,18 @@ describe("YuanTianGangService - Scan Events & Status Bar Progress", () => {
     });
 
     it("RFC 0136: 接收 ScanDirectoryReport 并发送 scan_directory_discovered 启奏", () => {
-        let callback: ((result: unknown) => void) | null = null;
-        if (mockScanAdapterOn.mock.calls.length > 0) {
-            callback = mockScanAdapterOn.mock.calls[mockScanAdapterOn.mock.calls.length - 1][0];
-        }
+        const handler = getFindPhotoHandler();
+        expect(handler).not.toBeNull();
 
-        expect(callback).not.toBeNull();
-
-        // 模拟 Tauri 触发 ScanDirectoryReport 事件
-        callback!({
-            type: "directory",
-            requestId: "req-2",
-            rootPath: "/Volumes/SUCAI/Test",
-            directory: {
-                path: "/Volumes/SUCAI/Test/SubFolder",
-                isDirectory: true,
+        handler!({
+            payload: {
+                type: "directory",
+                requestId: "req-2",
+                rootPath: "/Volumes/SUCAI/Test",
+                directory: {
+                    path: "/Volumes/SUCAI/Test/SubFolder",
+                    isDirectory: true,
+                },
             },
         });
 
@@ -100,24 +97,22 @@ describe("YuanTianGangService - Scan Events & Status Bar Progress", () => {
     });
 
     it("兼容旧版 ScanActionEvent 包含 action.path 与 currentFile", () => {
-        let callback: ((result: unknown) => void) | null = null;
-        if (mockScanAdapterOn.mock.calls.length > 0) {
-            callback = mockScanAdapterOn.mock.calls[mockScanAdapterOn.mock.calls.length - 1][0];
-        }
+        const handler = getFindPhotoHandler();
+        expect(handler).not.toBeNull();
 
-        expect(callback).not.toBeNull();
-
-        callback!({
-            type: "progress",
-            requestId: "req-legacy",
-            action: {
-                path: "/Volumes/SUCAI/Test",
-                isDirectory: true,
-            },
-            currentFile: "vacation.jpg",
-            progress: {
-                processed: 2,
-                total: 5,
+        handler!({
+            payload: {
+                type: "progress",
+                requestId: "req-legacy",
+                action: {
+                    path: "/Volumes/SUCAI/Test",
+                    isDirectory: true,
+                },
+                currentFile: "vacation.jpg",
+                progress: {
+                    processed: 2,
+                    total: 5,
+                },
             },
         });
 
@@ -131,23 +126,21 @@ describe("YuanTianGangService - Scan Events & Status Bar Progress", () => {
     });
 
     it("Complete 标志清空进度并发出完成事件", () => {
-        let callback: ((result: unknown) => void) | null = null;
-        if (mockScanAdapterOn.mock.calls.length > 0) {
-            callback = mockScanAdapterOn.mock.calls[mockScanAdapterOn.mock.calls.length - 1][0];
-        }
+        const handler = getFindPhotoHandler();
+        expect(handler).not.toBeNull();
 
-        expect(callback).not.toBeNull();
-
-        callback!({
-            type: "complete",
-            requestId: "req-3",
-            rootPath: "/Volumes/SUCAI/Test",
+        handler!({
+            payload: {
+                type: "complete",
+                requestId: "req-3",
+                rootPath: "/Volumes/SUCAI/Test",
+            },
         });
 
         expect(emittedEvents.length).toBeGreaterThanOrEqual(1);
         const progressQizou = emittedEvents.find((e) => e.matter === QizouMatters.SCAN_PROGRESS);
         expect(progressQizou).toBeDefined();
-        expect(progressQizou.content.filePath).toBe("");
-        expect(progressQizou.content.type).toBe("complete");
+        expect(progressQizou!.content.filePath).toBe("");
+        expect(progressQizou!.content.type).toBe("complete");
     });
 });
