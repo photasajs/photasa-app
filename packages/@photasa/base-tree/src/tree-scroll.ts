@@ -17,6 +17,27 @@ export function isFixedItemIndexInScrollViewport(params: {
     return itemTop >= scrollTop && itemBottom <= viewBottom;
 }
 
+/** 将滚动容器恢复到指定 offset（多次 apply 对抗虚拟列表异步重排） */
+export function restoreScrollContainerOffset(
+    container: HTMLElement,
+    offset: number,
+    applyVirtualizerOffset?: (offset: number) => void,
+): void {
+    const top = Math.max(0, offset);
+    const apply = (): void => {
+        container.scrollTop = top;
+        applyVirtualizerOffset?.(top);
+    };
+
+    apply();
+    if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(() => {
+            apply();
+            requestAnimationFrame(apply);
+        });
+    }
+}
+
 /** 非虚拟树：节点是否完整落在滚动容器视口内 */
 export function isElementInScrollContainer(element: Element, container: Element): boolean {
     const elementRect = element.getBoundingClientRect();

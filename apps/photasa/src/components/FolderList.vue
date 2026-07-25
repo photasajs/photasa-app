@@ -103,8 +103,17 @@ const selectedKeys = ref<string[]>([]);
 /** BaseTree ref — 启动恢复 lastOpenedFolder 时 scrollToNode */
 const folderTreeRef = ref<InstanceType<typeof BaseTree> | null>(null);
 
-/** 仅启动恢复时滚入视口一次；用户展开/切换文件夹不滚动 */
+/** 用户已操作树或已完成启动滚动恢复后，禁止再自动 scrollToNode */
 const didRestoreScrollIntoView = ref(false);
+
+function markTreeScrollRestoreComplete(): void {
+    didRestoreScrollIntoView.value = true;
+}
+
+/** 用户手动展开/折叠后不再做启动恢复滚动 */
+function onTreeExpand(): void {
+    markTreeScrollRestoreComplete();
+}
 
 /**
  * Show config modal
@@ -151,12 +160,12 @@ async function scrollRestoredFolderIntoViewOnce(folderPath: string): Promise<voi
 
     await nextTick();
     folderTreeRef.value?.scrollToNode(normalized, { align: "center", behavior: "auto" });
-    didRestoreScrollIntoView.value = true;
+    markTreeScrollRestoreComplete();
 }
 
-// Watch currentFolder + paths + folderTree：持久化恢复时 paths/tree 可能晚于 currentFolder
+// currentFolder / paths 变化时同步展开与选中（勿 deep watch folderTree，避免扫描更新触发滚动）
 watch(
-    [currentFolder, paths, folderTree],
+    [currentFolder, paths],
     ([newFolder]) => {
         if (newFolder) {
             logger.debug(
@@ -166,7 +175,34 @@ watch(
             syncTreeViewForCurrentFolder(newFolder);
         }
     },
-    { immediate: true, deep: true },
+    { immediate: true },
+);
+
+// folderTree 晚到：仅补展开祖先，不触发滚动（扫描更新也不滚）
+watch(
+    () => folderTree.value,
+    () => {
+        const folder = currentFolder.value;
+        if (!folder) {
+            return;
+        }
+
+        expandedKeys.value = mergeExpandedKeysForCurrentFolder(
+            expandedKeys.value,
+            folder,
+            paths.value,
+        );
+    },
+);
+
+// folderTree 从空变为有数据时，补一次启动恢复滚动
+watch(
+    () => folderTree.value.length,
+    (length, previousLength) => {
+        if (length > 0 && previousLength === 0 && currentFolder.value) {
+            void scrollRestoredFolderIntoViewOnce(currentFolder.value);
+        }
+    },
 );
 /**
  * Watch the selected keys
@@ -307,13 +343,14 @@ defineExpose({
                 v-model:expandedKeys="expandedKeys"
                 v-model:selectedKeys="selectedKeys"
                 :tree-data="folderTree as TreeNode[]"
-                :virtual="true"
+                :virtual="false"
                 height="100%"
                 :item-height="34"
                 :show-icon="true"
                 :show-line="false"
                 :selectable="true"
                 :checkable="false"
+                @expand="onTreeExpand"
             >
                 <!-- 文件夹图标 -->
                 <template #icon>
@@ -392,8 +429,9 @@ defineExpose({
 }
 
 .folder-tree {
-    min-height: 100%;
+    height: 100%;
     width: 100%;
+    min-height: 0;
 
     /* Modern directory tree row styling */
     .base-tree-node {

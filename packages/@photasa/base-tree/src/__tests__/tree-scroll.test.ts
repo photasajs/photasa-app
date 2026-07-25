@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { isElementInScrollContainer, isFixedItemIndexInScrollViewport } from "../tree-scroll";
+import {
+    isElementInScrollContainer,
+    isFixedItemIndexInScrollViewport,
+    restoreScrollContainerOffset,
+} from "../tree-scroll";
 
 describe("tree-scroll", () => {
     describe("isFixedItemIndexInScrollViewport", () => {
@@ -65,6 +69,19 @@ describe("tree-scroll", () => {
             } as Element;
 
             expect(isElementInScrollContainer(element, container)).toBe(false);
+        });
+    });
+
+    describe("restoreScrollContainerOffset", () => {
+        it("sets scrollTop and invokes virtualizer callback", () => {
+            const container = document.createElement("div");
+            const offsets: number[] = [];
+            restoreScrollContainerOffset(container, 272, (offset) => {
+                offsets.push(offset);
+            });
+
+            expect(container.scrollTop).toBe(272);
+            expect(offsets).toEqual([272]);
         });
     });
 });

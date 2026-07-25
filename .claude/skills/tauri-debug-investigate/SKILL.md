@@ -39,11 +39,12 @@ description: >-
 
 ## 常见原因
 
-| 现象             | 检查                                                                                        |
-| ---------------- | ------------------------------------------------------------------------------------------- |
-| MCP 无法操作界面 | `withGlobalTauri`、`mcp-bridge:default`、应用是否为 **debug** 运行、是否先 `driver_session` |
-| `invoke` 报错    | 命令名是否与 `main.rs` 的 `generate_handler!` 一致；capabilities 是否允许对应插件           |
-| 仅 release 失败  | release 不含 MCP 插件属预期；换 **dev** 做 MCP 调试                                         |
+| 现象             | 检查                                                                                                           |
+| ---------------- | -------------------------------------------------------------------------------------------------------------- |
+| MCP 无法操作界面 | `withGlobalTauri`、`mcp-bridge:default`、应用是否为 **debug** 运行、是否先 `driver_session`                    |
+| `invoke` 报错    | 命令名是否与 `main.rs` 的 `generate_handler!` 一致；capabilities 是否允许对应插件                              |
+| 仅 release 失败  | release 不含 MCP 插件属预期；换 **dev** 做 MCP 调试                                                            |
+| 侧栏树展开跳顶   | 读 **`base-tree-folder-scroll`**：`FolderList` 是否 `watch(folderTree)` 调 `scrollToNode`；是否双层 `overflow` |
 
 ## 约束
 
