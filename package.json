@@ -18,7 +18,8 @@
         "sync-version": "node scripts/sync-workspace-version.mjs",
         "check-version": "node scripts/sync-workspace-version.mjs --check",
         "generate:release-please": "node scripts/generate-release-please-config.mjs",
-        "test:scripts": "node --test scripts/__tests__/*.test.mjs"
+        "test:scripts": "node --test scripts/__tests__/*.test.mjs",
+        "verify:release:latest-json": "node scripts/verify-release-latest-json.mjs"
     },
     "devDependencies": {
         "@systembug/pangu": "^0.0.12",

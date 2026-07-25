@@ -140,7 +140,7 @@ jobs:
     # RFC 0155: verify once after all platform legs finish (not per-matrix — avoids races).
     verify-updater-artifact:
         needs: [resolve, build-and-upload]
-        if: ${{ needs.build-and-upload.result == 'success' }}
+        if: ${{ always() && needs.build-and-upload.result != 'cancelled' }}
         runs-on: ubuntu-latest
         steps:
             - name: Verify updater artifact was published
@@ -151,6 +151,11 @@ jobs:
                   set -euo pipefail
                   tag="${{ needs.resolve.outputs.tag_name }}"
                   repo="${{ github.repository }}"
+                  build_result="${{ needs.build-and-upload.result }}"
+                  if [ "$build_result" != "success" ]; then
+                    echo "::error::build-and-upload result=$build_result — all platform legs must succeed before release is updater-ready."
+                    exit 1
+                  fi
                   if ! gh release view "$tag" --repo "$repo" --json assets \
                       --jq '.assets[].name' | grep -qx "latest.json"; then
                     echo "::error::latest.json missing from release $tag — createUpdaterArtifacts may be disabled or signing failed. Updater will be unreachable."
