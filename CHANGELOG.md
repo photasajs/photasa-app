@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.3.0](https://github.com/photasajs/photasa-app/compare/v2.2.0...v2.3.0) (2026-07-26)
+
+
+### Features
+
+* **photasa:** menu redesign, report issue, and titlebar regression guards ([afaf528](https://github.com/photasajs/photasa-app/commit/afaf528a49ca6b8a0fb516c9d0013b8c2c3f03fb))
+* **photasa:** menu redesign, report issue, folder-tree scroll fixes ([097a91a](https://github.com/photasajs/photasa-app/commit/097a91a4a87a44018d31dbf4a2e1621bcc4cc0cf))
+
+
+### Bug Fixes
+
+* **photasa:** add vite-env types for ImportMeta.env ([549e1a7](https://github.com/photasajs/photasa-app/commit/549e1a7157cb517205582c8b73c3a9b53227dc60))
+* **photasa:** gate submenu_native_id to macOS only ([a53b88c](https://github.com/photasajs/photasa-app/commit/a53b88cc45083603b3ec6114ef19ad2e0a6177c2))
+
 ## [2.2.0](https://github.com/photasajs/photasa-app/compare/v2.1.1...v2.2.0) (2026-07-25)
 
 
