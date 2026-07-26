@@ -66,6 +66,7 @@ ffmpeg-next = { version = "8.1", default-features = false, features = ["build", 
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
+objc2-app-kit = "0.3"
 objc2-foundation = "0.3"
 
 # Clippy：all 启用常规检查；脚本中 -D warnings 将警告视为错误

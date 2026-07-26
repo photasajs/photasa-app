@@ -2,13 +2,8 @@
 import { computed, nextTick } from "vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import { i18nUtils, type Locale } from "../i18n/config";
-import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
-import { useI18n } from "vue-i18n";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { loggers } from "@photasa/common";
-
-const zhangSunWuJi = useZhangSunWuJi();
-const { t } = useI18n();
 
 /**
  * 褚遂良服务实例 - 偏好设置管理
@@ -30,10 +25,9 @@ async function selectLocale(locale: Locale) {
         logger.error(`📚 语言切换失败: ${locale}`, error);
     }
 
-    // 2. 立即更新i18n显示，提供即时反馈
+    // 2. 立即更新 i18n；App.vue 监听 locale 后会刷新系统菜单
     i18nUtils.setLocale(locale);
     await nextTick();
-    zhangSunWuJi.refreshMenus(t); // 切换语言后刷新菜单
 }
 
 const currentLocale = computed(() => i18nUtils.getCurrentLocale());

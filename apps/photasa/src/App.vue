@@ -68,7 +68,7 @@ const logger = loggers.lishimin;
 const imports = useImportOperations();
 const themeManager = useChuSuiLiang().themeManager;
 const chuSuiLiang = useChuSuiLiang();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const preferenceStore = usePreferenceStore();
 const { paths, currentFolder } = storeToRefs(preferenceStore);
 
@@ -246,6 +246,11 @@ async function detectRecoverableImports(): Promise<void> {
 
 const weiZheng = useWeiZheng();
 let teardownGlobalErrorHandlers: (() => void) | undefined;
+
+// 偏好/玄奘切换语言后同步系统菜单（PredefinedMenuItem 依赖全量 rebuild）
+watch(locale, () => {
+    zhangSunWuJi.refreshMenus(t);
+});
 
 onMounted(async () => {
     registerReportIssueDialogOpener(handleOpenReportIssue);

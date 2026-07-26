@@ -293,7 +293,7 @@ fn build_submenu(app: &AppHandle, data: &MenuItemData) -> Result<Submenu<tauri::
             }
 
             if let Some(role) = &item.role {
-                if let Some(predefined) = role_to_predefined(app, role) {
+                if let Some(predefined) = role_to_predefined(app, role, &item.label) {
                     builder = builder.item(&predefined);
                     continue;
                 }
@@ -328,28 +328,44 @@ fn build_submenu(app: &AppHandle, data: &MenuItemData) -> Result<Submenu<tauri::
     builder.build().map_err(|e| e.to_string())
 }
 
+/// 前端已翻译的 label 传给 muda 预定义项，避免仅显示 macOS 系统语言（常为英文）
+#[cfg(target_os = "macos")]
+fn optional_predefined_label(label: &str) -> Option<&str> {
+    let trimmed = label.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed)
+    }
+}
+
 /// 将 contract reference role 字符串映射到 Tauri PredefinedMenuItem
 #[cfg(target_os = "macos")]
-fn role_to_predefined(app: &AppHandle, role: &str) -> Option<PredefinedMenuItem<tauri::Wry>> {
+fn role_to_predefined(
+    app: &AppHandle,
+    role: &str,
+    label: &str,
+) -> Option<PredefinedMenuItem<tauri::Wry>> {
+    let text = optional_predefined_label(label);
     match role {
         // RFC 0169: close 不得映射到 quit；窗口关闭走自定义 menu key + close_window
-        "quit" => PredefinedMenuItem::quit(app, None).ok(),
+        "quit" => PredefinedMenuItem::quit(app, text).ok(),
         "close" => None,
-        "hide" => PredefinedMenuItem::hide(app, None).ok(),
-        "hideOthers" => PredefinedMenuItem::hide_others(app, None).ok(),
-        "unhide" | "showAll" => PredefinedMenuItem::show_all(app, None).ok(),
-        "minimize" => PredefinedMenuItem::minimize(app, None).ok(),
-        "zoom" | "maximize" => PredefinedMenuItem::maximize(app, None).ok(),
-        "cut" => PredefinedMenuItem::cut(app, None).ok(),
-        "copy" => PredefinedMenuItem::copy(app, None).ok(),
-        "paste" => PredefinedMenuItem::paste(app, None).ok(),
-        "selectAll" => PredefinedMenuItem::select_all(app, None).ok(),
-        "undo" => PredefinedMenuItem::undo(app, None).ok(),
-        "redo" => PredefinedMenuItem::redo(app, None).ok(),
+        "hide" => PredefinedMenuItem::hide(app, text).ok(),
+        "hideOthers" => PredefinedMenuItem::hide_others(app, text).ok(),
+        "unhide" | "showAll" => PredefinedMenuItem::show_all(app, text).ok(),
+        "minimize" => PredefinedMenuItem::minimize(app, text).ok(),
+        "zoom" | "maximize" => PredefinedMenuItem::maximize(app, text).ok(),
+        "cut" => PredefinedMenuItem::cut(app, text).ok(),
+        "copy" => PredefinedMenuItem::copy(app, text).ok(),
+        "paste" => PredefinedMenuItem::paste(app, text).ok(),
+        "selectAll" => PredefinedMenuItem::select_all(app, text).ok(),
+        "undo" => PredefinedMenuItem::undo(app, text).ok(),
+        "redo" => PredefinedMenuItem::redo(app, text).ok(),
         "separator" => PredefinedMenuItem::separator(app).ok(),
-        "about" => PredefinedMenuItem::about(app, None, None).ok(),
-        "services" => PredefinedMenuItem::services(app, None).ok(),
-        "togglefullscreen" | "fullscreen" => PredefinedMenuItem::fullscreen(app, None).ok(),
+        "about" => PredefinedMenuItem::about(app, text, None).ok(),
+        "services" => PredefinedMenuItem::services(app, text).ok(),
+        "togglefullscreen" | "fullscreen" => PredefinedMenuItem::fullscreen(app, text).ok(),
         _ => None,
     }
 }
@@ -383,6 +399,14 @@ mod tests {
         assert_eq!(submenu_native_id("help"), HELP_SUBMENU_ID);
         assert_eq!(submenu_native_id("window"), WINDOW_SUBMENU_ID);
         assert_eq!(submenu_native_id("file"), "file");
+    }
+
+    #[test]
+    #[cfg(target_os = "macos")]
+    fn optional_predefined_label_trims_and_rejects_empty() {
+        assert_eq!(optional_predefined_label("  剪切  "), Some("剪切"));
+        assert_eq!(optional_predefined_label(""), None);
+        assert_eq!(optional_predefined_label("   "), None);
     }
 
     #[test]

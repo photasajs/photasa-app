@@ -12,6 +12,7 @@ import {
     MENU_KEY_VIEW_RELOAD,
     MENU_KEY_WINDOW_CLOSE,
     MENU_KEY_WINDOW_MAXIMIZE,
+    MENU_KEY_WINDOW_MINIMIZE,
 } from "../../constants/menu-keys";
 import { PHOTASA_ME_DOCS_URL, PHOTASA_ME_HOMEPAGE_URL } from "../../constants/photasa-me-api";
 
@@ -91,11 +92,11 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
         key: "edit",
         label: "menu.edit.menu",
         items: [
-            { key: "edit-undo", label: "menu.edit.undo", role: "undo", shortcut: "CmdOrCtrl+Z" },
+            // 不用 PredefinedMenuItem：macOS 会强制英文；走自定义项 + dispatch_standard_edit_action
+            { key: "edit-undo", label: "menu.edit.undo", shortcut: "CmdOrCtrl+Z" },
             {
                 key: "edit-redo",
                 label: "menu.edit.redo",
-                role: "redo",
                 shortcut: "CmdOrCtrl+Shift+Z",
             },
             {
@@ -104,9 +105,9 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
                 role: "separator",
                 type: "separator",
             },
-            { key: "edit-cut", label: "menu.edit.cut", role: "cut", shortcut: "CmdOrCtrl+X" },
-            { key: "edit-copy", label: "menu.edit.copy", role: "copy", shortcut: "CmdOrCtrl+C" },
-            { key: "edit-paste", label: "menu.edit.paste", role: "paste", shortcut: "CmdOrCtrl+V" },
+            { key: "edit-cut", label: "menu.edit.cut", shortcut: "CmdOrCtrl+X" },
+            { key: "edit-copy", label: "menu.edit.copy", shortcut: "CmdOrCtrl+C" },
+            { key: "edit-paste", label: "menu.edit.paste", shortcut: "CmdOrCtrl+V" },
             {
                 key: "edit-separator-2",
                 label: "menu.separator",
@@ -116,7 +117,6 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
             {
                 key: "edit-select-all",
                 label: "menu.edit.selectAll",
-                role: "selectAll",
                 shortcut: "CmdOrCtrl+A",
             },
         ],
@@ -171,9 +171,8 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
         label: "menu.window.menu",
         items: [
             {
-                key: "window-minimize",
+                key: MENU_KEY_WINDOW_MINIMIZE,
                 label: "menu.window.minimize",
-                role: "minimize",
                 shortcut: "Ctrl+M",
             },
             {

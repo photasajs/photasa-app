@@ -44,6 +44,9 @@ import {
     MENU_KEY_VIEW_RELOAD,
     MENU_KEY_WINDOW_CLOSE,
     MENU_KEY_WINDOW_MAXIMIZE,
+    MENU_KEY_WINDOW_MINIMIZE,
+    STANDARD_EDIT_MENU_ACTION_BY_KEY,
+    type StandardEditMenuKey,
 } from "../../constants/menu-keys";
 import { openReportIssueDialog } from "../report-issue-dialog";
 import {
@@ -298,6 +301,38 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
                     })
                     .catch((err: unknown) => {
                         logger.error("📋 长孙无忌：窗口最大化切换失败", err);
+                    });
+                return;
+            }
+
+            if (payload.key === MENU_KEY_WINDOW_MINIMIZE) {
+                void this.fangXuanLingService
+                    .processZouzhe({
+                        department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
+                        matter: ZOUZHE_MATTERS.WINDOW_MINIMIZE,
+                        content: {},
+                        timestamp: Date.now(),
+                        priority: ZOUZHE_PRIORITIES.NORMAL,
+                    })
+                    .catch((err: unknown) => {
+                        logger.error("📋 长孙无忌：窗口最小化失败", err);
+                    });
+                return;
+            }
+
+            const standardEditAction =
+                STANDARD_EDIT_MENU_ACTION_BY_KEY[payload.key as StandardEditMenuKey];
+            if (standardEditAction) {
+                void this.fangXuanLingService
+                    .processZouzhe({
+                        department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
+                        matter: ZOUZHE_MATTERS.STANDARD_EDIT_ACTION,
+                        content: { action: standardEditAction },
+                        timestamp: Date.now(),
+                        priority: ZOUZHE_PRIORITIES.NORMAL,
+                    })
+                    .catch((err: unknown) => {
+                        logger.error(`📋 长孙无忌：编辑菜单动作失败（${standardEditAction}）`, err);
                     });
                 return;
             }
