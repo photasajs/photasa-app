@@ -38,6 +38,7 @@ import {
     SHELL_COMMANDS,
     WATCH_COMMANDS,
     WATCH_EVENTS,
+    WINDOW_COMMANDS,
 } from "./tauri-command-names";
 import { extractFolderTreeFromContext } from "./folder-tree-payload";
 import { buildPreferencesDelta, PREFERENCE_ZHAOLING_MATTERS } from "./preferences-delta";
@@ -108,6 +109,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
     private menuActionCleanupFn?: () => void; // ✅ RFC 0058: 菜单点击事件清理函数
     private scanQueueAddCleanupFn?: () => void; // ✅ RFC 0137: 文件监视合并批次
     private watchRemovalCleanupFns: Array<() => void> = [];
+    private watchCreationCleanupFns: Array<() => void> = [];
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
     /** 圣旨接收通道 */
     private shengzhiPort?: MessagePort;
@@ -131,6 +133,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         this.setupMenuActionEventListening(); // ✅ RFC 0058: 监听 menu:action IPC 事件
         this.setupScanQueueAddEventListening(); // ✅ RFC 0137: 监听 picasa:add-to-scan-queue
         this.setupWatchRemovalEventListening();
+        this.setupWatchCreationEventListening();
     }
 
     /**
@@ -554,6 +557,37 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         }
     }
 
+    /** Rust watch 新建目录：立即启奏 folderTree 更新（不等扫描队列防抖） */
+    private setupWatchCreationEventListening(): void {
+        if (!isTauri()) {
+            return;
+        }
+
+        listen<{ path?: string }>(WATCH_EVENTS.FILE_ADD_DIR, (event) => {
+            const path = event.payload?.path;
+            if (path) {
+                this.reportWatchFolderDiscovered(path);
+            }
+        })
+            .then((unlisten) => this.watchCreationCleanupFns.push(unlisten))
+            .catch((error: unknown) => {
+                logger.warn(`🔮 建立 ${WATCH_EVENTS.FILE_ADD_DIR} 监听失败`, error);
+            });
+    }
+
+    private reportWatchFolderDiscovered(folderPath: string): void {
+        if (!this._qizouBus) {
+            return;
+        }
+        this._qizouBus.emit("qizou", {
+            matter: QizouMatters.FOLDER_DISCOVERED,
+            content: { folderPath },
+            from: "袁天罡",
+            timestamp: Date.now(),
+            metadata: { type: "report" },
+        });
+    }
+
     private reportWatchPathRemoved(path: string, isFile: boolean): void {
         if (!this._qizouBus) {
             return;
@@ -669,6 +703,8 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         }
         this.watchRemovalCleanupFns.forEach((cleanup) => cleanup());
         this.watchRemovalCleanupFns = [];
+        this.watchCreationCleanupFns.forEach((cleanup) => cleanup());
+        this.watchCreationCleanupFns = [];
         this.importEvents.destroy();
         logger.info("🔮 事件监听已清理");
     }
@@ -993,36 +1029,55 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             }
         }
 
-        // RFC 0149/0150：shell + menu — 袁天罡 executeZhaoling 内直连 invoke（不经 zouwu）
+        // RFC 0149/0150/0169：shell + menu + window — 袁天罡 executeZhaoling 内直连 invoke（不经 zouwu）
         if (
             zhaoling.command === ZOUZHE_MATTERS.UPDATE_MENU ||
             zhaoling.command === ZOUZHE_MATTERS.OPEN_EXTERNAL ||
-            zhaoling.command === ZOUZHE_MATTERS.OPEN_IN_FINDER
+            zhaoling.command === ZOUZHE_MATTERS.OPEN_IN_FINDER ||
+            zhaoling.command === ZOUZHE_MATTERS.WINDOW_MAXIMIZE_TOGGLE ||
+            zhaoling.command === ZOUZHE_MATTERS.WINDOW_CLOSE
         ) {
             try {
                 if (!isTauri()) {
-                    throw new Error("shell/menu 仅支持 Tauri 环境");
+                    throw new Error("shell/menu/window 仅支持 Tauri 环境");
                 }
                 const context = (zhaoling.context ?? {}) as Record<string, unknown>;
 
                 if (zhaoling.command === ZOUZHE_MATTERS.UPDATE_MENU) {
-                    await invoke(MENU_COMMANDS.APPLY, { menus: context.menus ?? [] });
+                    if (typeof context.key === "string") {
+                        await invoke(MENU_COMMANDS.UPDATE_ITEM, {
+                            key: context.key,
+                            disabled: context.disabled,
+                            label: typeof context.label === "string" ? context.label : undefined,
+                        });
+                    } else {
+                        await invoke(MENU_COMMANDS.APPLY, { menus: context.menus ?? [] });
+                    }
                 } else if (zhaoling.command === ZOUZHE_MATTERS.OPEN_EXTERNAL) {
                     await invoke(SHELL_COMMANDS.OPEN_EXTERNAL, {
                         url: String(context.url ?? ""),
                     });
-                } else {
+                } else if (zhaoling.command === ZOUZHE_MATTERS.OPEN_IN_FINDER) {
                     await invoke(SHELL_COMMANDS.SHOW_IN_FOLDER, {
                         path: String(context.path ?? ""),
                     });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.WINDOW_MAXIMIZE_TOGGLE) {
+                    const maximized = await invoke<boolean>(WINDOW_COMMANDS.IS_MAXIMIZED);
+                    if (maximized) {
+                        await invoke(WINDOW_COMMANDS.UNMAXIMIZE);
+                    } else {
+                        await invoke(WINDOW_COMMANDS.MAXIMIZE);
+                    }
+                } else {
+                    await invoke(WINDOW_COMMANDS.CLOSE);
                 }
 
-                logger.info(`🔮 shell/menu 直连成功: ${zhaoling.command}`);
+                logger.info(`🔮 shell/menu/window 直连成功: ${zhaoling.command}`);
                 return {
                     acknowledged: true,
                     command: zhaoling.command,
                     data: { success: true },
-                    blessing: "shell/menu 已执行",
+                    blessing: "shell/menu/window 已执行",
                     timestamp: Date.now(),
                     metadata: {
                         engineName: "shell-menu-direct",
@@ -1036,14 +1091,14 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     },
                 };
             } catch (error) {
-                logger.error(`🔮 shell/menu 直连失败: ${zhaoling.command}`, error);
+                logger.error(`🔮 shell/menu/window 直连失败: ${zhaoling.command}`, error);
                 return {
                     acknowledged: false,
                     command: zhaoling.command,
                     data: null,
-                    blessing: "shell/menu 执行失败",
+                    blessing: "shell/menu/window 执行失败",
                     timestamp: Date.now(),
-                    error: error instanceof Error ? error.message : "shell/menu 异常",
+                    error: error instanceof Error ? error.message : "shell/menu/window 异常",
                 };
             }
         }

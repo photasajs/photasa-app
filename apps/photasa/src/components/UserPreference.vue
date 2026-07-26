@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import { usePhotosStore } from "@renderer/stores/photos";
@@ -17,6 +17,14 @@ import ImportSettings from "./settings/ImportSettings.vue";
 defineOptions({
     name: "UserPreference",
 });
+
+const props = withDefaults(
+    defineProps<{
+        /** 打开设置弹窗时定位到的标签页（如 Help → About 使用 `about`） */
+        initialTabKey?: string;
+    }>(),
+    { initialTabKey: "general" },
+);
 
 const { t } = useI18n();
 
@@ -60,6 +68,21 @@ const tabsData = computed(() => [
     { key: "about", label: label.value.tabs.about },
     { key: "advanced", label: label.value.tabs.advanced },
 ]);
+
+function activateTabByKey(tabKey: string): void {
+    const idx = tabsData.value.findIndex((tab) => tab.key === tabKey);
+    if (idx >= 0) {
+        activeKey.value = idx;
+    }
+}
+
+watch(
+    () => props.initialTabKey,
+    (tabKey) => {
+        activateTabByKey(tabKey);
+    },
+    { immediate: true },
+);
 </script>
 
 <template>

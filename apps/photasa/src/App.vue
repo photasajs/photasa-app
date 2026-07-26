@@ -41,6 +41,15 @@ import {
 import { TELEMETRY_EVENTS } from "@renderer/constants/telemetry-events";
 import LogConsole from "./components/LogConsole.vue";
 import TelemetryConsentDialog from "./components/TelemetryConsentDialog.vue";
+import ReportIssueDialog from "./components/ReportIssueDialog.vue";
+import {
+    clearReportIssueDialogOpener,
+    registerReportIssueDialogOpener,
+} from "@renderer/services/report-issue-dialog";
+import {
+    clearMenuAppHandlers,
+    registerMenuAppHandlers,
+} from "@renderer/services/menu-app-handlers";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
@@ -79,6 +88,8 @@ const { queue: scanningFolder } = storeToRefs(useScanningStore());
 // 使用对话框管理器统一管理对话框状态
 const showImportDialog = ref(false);
 const showPreference = ref(false);
+const preferenceInitialTab = ref("general");
+const showReportIssue = ref(false);
 const showScanList = ref(false);
 const showTelemetryConsent = ref(false);
 const loading = ref(false);
@@ -113,7 +124,25 @@ function handleOpenImportPhotos() {
 function handleOpenPreference() {
     logger.debug("Opening preference dialog...");
     captureTelemetryEvent(TELEMETRY_EVENTS.SETTINGS_OPENED);
+    preferenceInitialTab.value = "general";
     showPreference.value = true;
+}
+
+function handleOpenAbout() {
+    logger.debug("Opening about tab in preference dialog...");
+    preferenceInitialTab.value = "about";
+    showPreference.value = true;
+}
+
+function handleOpenReportIssue() {
+    showReportIssue.value = true;
+}
+
+async function addLibraryFolderFromMenu(): Promise<void> {
+    const selection = await zhangSunWuJi.chooseDirectories(false);
+    if (selection.filePaths.length > 0) {
+        await chuSuiLiang.addPath(selection.filePaths[0]);
+    }
 }
 
 /**
@@ -219,6 +248,16 @@ const weiZheng = useWeiZheng();
 let teardownGlobalErrorHandlers: (() => void) | undefined;
 
 onMounted(async () => {
+    registerReportIssueDialogOpener(handleOpenReportIssue);
+    registerMenuAppHandlers({
+        openPreference: handleOpenPreference,
+        openAbout: handleOpenAbout,
+        openImportPhotos: handleOpenImportPhotos,
+        openScanList: handleOpenScanList,
+        addLibraryFolder: () => {
+            void addLibraryFolderFromMenu();
+        },
+    });
     teardownGlobalErrorHandlers = installGlobalErrorHandlers();
 
     const reconciledTelemetry = reconcileTelemetryConsent(preferenceStore.telemetry);
@@ -284,6 +323,8 @@ onMounted(async () => {
 
 // 组件卸载时清理监控服务
 onUnmounted(() => {
+    clearReportIssueDialogOpener();
+    clearMenuAppHandlers();
     scanMonitoringService.stopMonitoring();
     void qinQiong.stopWatching();
     teardownGlobalErrorHandlers?.();
@@ -381,7 +422,7 @@ useTitle(title);
         :style="{ '--modal-width': '800px' }"
         @close="handlePreferenceOk"
     >
-        <UserPreference></UserPreference>
+        <UserPreference :initial-tab-key="preferenceInitialTab"></UserPreference>
     </BaseModal>
 
     <ScanQueueDialog
@@ -418,6 +459,15 @@ useTitle(title);
     <LogConsole />
 
     <TelemetryConsentDialog v-if="showTelemetryConsent" @completed="showTelemetryConsent = false" />
+
+    <ReportIssueDialog
+        :show="showReportIssue"
+        @close="
+            () => {
+                showReportIssue = false;
+            }
+        "
+    />
 </template>
 
 <style lang="less">

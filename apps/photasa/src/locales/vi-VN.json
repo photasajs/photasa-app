@@ -301,7 +301,8 @@
             "hide": "Ẩn Photasa",
             "hideOthers": "Ẩn các ứng dụng khác",
             "unhide": "Hiện tất cả",
-            "quit": "Thoát"
+            "quit": "Thoát",
+            "preferences": "Tùy chọn…"
         },
         "view": {
             "menu": "Xem",
@@ -323,9 +324,25 @@
         "help": {
             "menu": "Trợ giúp",
             "learnMore": "Tìm hiểu thêm",
-            "about": "Giới thiệu về Photasa"
+            "about": "Giới thiệu về Photasa",
+            "reportIssue": "Báo cáo sự cố"
         },
-        "separator": "Phân cách"
+        "separator": "Phân cách",
+        "file": {
+            "menu": "Tệp",
+            "import": "Nhập ảnh",
+            "addFolder": "Thêm thư mục thư viện",
+            "scanQueue": "Hàng đợi quét"
+        },
+        "edit": {
+            "menu": "Chỉnh sửa",
+            "undo": "Hoàn tác",
+            "redo": "Làm lại",
+            "cut": "Cắt",
+            "copy": "Sao chép",
+            "paste": "Dán",
+            "selectAll": "Chọn tất cả"
+        }
     },
     "notification": {
         "info": "Thông báo",
@@ -626,5 +643,28 @@
             "savedMessage": "Lựa chọn của bạn đã được áp dụng.",
             "errorTitle": "Không thể lưu cài đặt thu thập dữ liệu"
         }
+    },
+    "reportIssue": {
+        "title": "Báo cáo sự cố",
+        "categoryLabel": "Danh mục",
+        "category": {
+            "bug": "Lỗi",
+            "feature": "Yêu cầu tính năng",
+            "support": "Hỗ trợ",
+            "general": "Chung"
+        },
+        "titleLabel": "Tiêu đề",
+        "titlePlaceholder": "Tóm tắt ngắn về sự cố",
+        "bodyLabel": "Mô tả",
+        "bodyPlaceholder": "Các bước tái hiện, hành vi mong đợi và thực tế…",
+        "emailLabel": "Email (tùy chọn)",
+        "emailPlaceholder": "you@example.com",
+        "submit": "Gửi",
+        "cancel": "Hủy",
+        "successTitle": "Đã gửi báo cáo",
+        "successMessage": "Đã tạo issue #{number}.",
+        "openIssue": "Xem trên GitHub",
+        "errorTitle": "Gửi thất bại",
+        "errorMessage": "Không thể gửi báo cáo. Vui lòng thử lại sau."
     }
 }

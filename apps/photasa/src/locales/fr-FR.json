@@ -346,7 +346,8 @@
             "hide": "Masquer Photasa",
             "hideOthers": "Masquer les autres",
             "unhide": "Tout afficher",
-            "quit": "Quitter"
+            "quit": "Quitter",
+            "preferences": "Préférences…"
         },
         "view": {
             "menu": "Affichage",
@@ -368,9 +369,25 @@
         "help": {
             "menu": "Aide",
             "learnMore": "En savoir plus",
-            "about": "À propos de Photasa"
+            "about": "À propos de Photasa",
+            "reportIssue": "Signaler un problème"
         },
-        "separator": "Séparateur"
+        "separator": "Séparateur",
+        "file": {
+            "menu": "Fichier",
+            "import": "Importer des photos",
+            "addFolder": "Ajouter un dossier de bibliothèque",
+            "scanQueue": "File d'attente de numérisation"
+        },
+        "edit": {
+            "menu": "Édition",
+            "undo": "Annuler",
+            "redo": "Rétablir",
+            "cut": "Couper",
+            "copy": "Copier",
+            "paste": "Coller",
+            "selectAll": "Tout sélectionner"
+        }
     },
     "notification": {
         "info": "Info",
@@ -647,5 +664,28 @@
             "savedMessage": "Votre choix a été appliqué.",
             "errorTitle": "Échec de l'enregistrement des paramètres de télémétrie"
         }
+    },
+    "reportIssue": {
+        "title": "Signaler un problème",
+        "categoryLabel": "Catégorie",
+        "category": {
+            "bug": "Bug",
+            "feature": "Demande de fonctionnalité",
+            "support": "Assistance",
+            "general": "Général"
+        },
+        "titleLabel": "Titre",
+        "titlePlaceholder": "Résumé du problème",
+        "bodyLabel": "Description",
+        "bodyPlaceholder": "Étapes de reproduction, comportement attendu vs réel…",
+        "emailLabel": "E-mail (facultatif)",
+        "emailPlaceholder": "you@example.com",
+        "submit": "Envoyer",
+        "cancel": "Annuler",
+        "successTitle": "Problème envoyé",
+        "successMessage": "Issue #{number} a été créée.",
+        "openIssue": "Voir sur GitHub",
+        "errorTitle": "Échec de l’envoi",
+        "errorMessage": "Impossible d’envoyer le problème. Réessayez plus tard."
     }
 }

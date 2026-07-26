@@ -322,7 +322,8 @@
             "hide": "Hide Photasa",
             "hideOthers": "Hide Others",
             "unhide": "Show All",
-            "quit": "Quit"
+            "quit": "Quit",
+            "preferences": "Preferences…"
         },
         "view": {
             "menu": "View",
@@ -344,9 +345,25 @@
         "help": {
             "menu": "Help",
             "learnMore": "Learn More",
-            "about": "About Photasa"
+            "about": "About Photasa",
+            "reportIssue": "Report Issue"
         },
-        "separator": "Separator"
+        "separator": "Separator",
+        "file": {
+            "menu": "File",
+            "import": "Import Photos",
+            "addFolder": "Add Library Folder",
+            "scanQueue": "Scan Queue"
+        },
+        "edit": {
+            "menu": "Edit",
+            "undo": "Undo",
+            "redo": "Redo",
+            "cut": "Cut",
+            "copy": "Copy",
+            "paste": "Paste",
+            "selectAll": "Select All"
+        }
     },
     "notification": {
         "info": "Info",
@@ -589,5 +606,28 @@
             "savedMessage": "Your choice has been applied.",
             "errorTitle": "Failed to save telemetry settings"
         }
+    },
+    "reportIssue": {
+        "title": "Report an Issue",
+        "categoryLabel": "Category",
+        "category": {
+            "bug": "Bug",
+            "feature": "Feature request",
+            "support": "Support",
+            "general": "General"
+        },
+        "titleLabel": "Title",
+        "titlePlaceholder": "Brief summary of the issue",
+        "bodyLabel": "Description",
+        "bodyPlaceholder": "Steps to reproduce, expected vs actual behavior…",
+        "emailLabel": "Email (optional)",
+        "emailPlaceholder": "you@example.com",
+        "submit": "Submit",
+        "cancel": "Cancel",
+        "successTitle": "Issue submitted",
+        "successMessage": "Thank you! Issue #{number} was created.",
+        "openIssue": "View on GitHub",
+        "errorTitle": "Submission failed",
+        "errorMessage": "Could not submit the issue. Please try again later."
     }
 }

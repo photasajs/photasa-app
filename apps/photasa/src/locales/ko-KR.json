@@ -301,7 +301,8 @@
             "hide": "Photasa 숨기기",
             "hideOthers": "다른 항목 숨기기",
             "unhide": "모두 표시",
-            "quit": "종료"
+            "quit": "종료",
+            "preferences": "환경설정…"
         },
         "view": {
             "menu": "보기",
@@ -323,9 +324,25 @@
         "help": {
             "menu": "도움말",
             "learnMore": "자세히 알아보기",
-            "about": "Photasa 정보"
+            "about": "Photasa 정보",
+            "reportIssue": "문제 보고"
         },
-        "separator": "구분자"
+        "separator": "구분자",
+        "file": {
+            "menu": "파일",
+            "import": "사진 가져오기",
+            "addFolder": "라이브러리 폴더 추가",
+            "scanQueue": "스캔 대기열"
+        },
+        "edit": {
+            "menu": "편집",
+            "undo": "실행 취소",
+            "redo": "다시 실행",
+            "cut": "잘라내기",
+            "copy": "복사",
+            "paste": "붙여넣기",
+            "selectAll": "모두 선택"
+        }
     },
     "notification": {
         "info": "정보",
@@ -626,5 +643,28 @@
             "savedMessage": "선택이 적용되었습니다.",
             "errorTitle": "원격 분석 설정 저장 실패"
         }
+    },
+    "reportIssue": {
+        "title": "문제 보고",
+        "categoryLabel": "카테고리",
+        "category": {
+            "bug": "버그",
+            "feature": "기능 요청",
+            "support": "지원",
+            "general": "일반"
+        },
+        "titleLabel": "제목",
+        "titlePlaceholder": "문제 요약",
+        "bodyLabel": "설명",
+        "bodyPlaceholder": "재현 단계, 기대 동작과 실제 동작…",
+        "emailLabel": "이메일(선택)",
+        "emailPlaceholder": "you@example.com",
+        "submit": "제출",
+        "cancel": "취소",
+        "successTitle": "제출 완료",
+        "successMessage": "Issue #{number}이(가) 생성되었습니다.",
+        "openIssue": "GitHub에서 보기",
+        "errorTitle": "제출 실패",
+        "errorMessage": "문제를 제출할 수 없습니다. 나중에 다시 시도하세요."
     }
 }

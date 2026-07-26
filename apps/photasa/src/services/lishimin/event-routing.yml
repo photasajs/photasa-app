@@ -298,6 +298,17 @@ qizou_routes:
                       folderPath: "{{qizou.content.folderPath}}"
                   priority: "normal"
               description: "秦琼发现新文件夹后，下旨魏征添加到folderTree"
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "folder_discovered"
+                  content:
+                      folderPath: "{{qizou.content.folderPath}}"
+                  priority: "normal"
+              description: "Rust watch addDir 事件：立即更新 folderTree，不等扫描防抖"
 
     # ✅ RFC 0042 Step 2.5: 秦琼报告文件夹移除 → 李世民下旨魏征移除
     folder_removed:
@@ -320,11 +331,12 @@ qizou_routes:
           then:
               service: "魏征"
               shengzhi:
-                  command: "add_paths"
+                  command: "scan_completed"
                   content:
-                      paths:
-                          - "{{qizou.content.path}}"
-              description: "扫描完成后，下旨魏征更新树"
+                      path: "{{qizou.content.path}}"
+                      parentDir: "{{qizou.content.parentDir}}"
+                      operationType: "{{qizou.content.operationType}}"
+              description: "扫描完成后：目录更新 folderTree；文件刷新当前目录 photoList"
 
     # ✅ 用户手动请求重新扫描（百姓启奏）
     request_rescan:

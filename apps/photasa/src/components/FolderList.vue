@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, watch, reactive, computed, nextTick } from "vue";
+import { ref, reactive, computed } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import type { PhotasaConfig } from "@photasa/common";
 import { normalizePath } from "@renderer/utils/path";
-import { isEmpty } from "radash";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
+import { useFolderListTreeWatchers } from "@renderer/composables/useFolderListTreeWatchers";
 // ✅ RFC 0058: 使用服务而不是直接 API 调用
 import {
     BaseContextMenu,
@@ -16,20 +16,12 @@ import {
 } from "@renderer/components/ui";
 import { PhFolder } from "@phosphor-icons/vue";
 import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
-import type { TreeNode } from "@photasa/base-tree";
-import { findTreeNode } from "@photasa/base-tree";
 import { loggers } from "@photasa/common";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
 import { useAppStateStore } from "@renderer/services/fangxuanling/stores/appstate-store";
 import { EventNames } from "@renderer/constants/event-names";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
-import { canonicalFolderPath } from "@renderer/utils/folder-tree-path";
-import {
-    collectAllFolderKeys,
-    mergeExpandedKeysForCurrentFolder,
-    mergeExpandedKeysForNewFolders,
-} from "@renderer/utils/folder-tree-expand";
 
 const logger = loggers.lishimin;
 
@@ -68,174 +60,19 @@ const { paths, currentFolder } = storeToRefs(preferenceStore);
 const appStateStore = useAppStateStore();
 const { folderTree } = storeToRefs(appStateStore);
 
-/**
- * Expanded keys
- */
-const expandedKeys = ref<string[]>([...paths.value]);
-
-/** 跟踪已展示过的树节点，用于发现新子目录时自动展开祖先 */
-const knownFolderKeys = ref<Set<string>>(new Set(collectAllFolderKeys(folderTree.value)));
-
-watch(
-    folderTree,
-    (newTree) => {
-        const allKeys = collectAllFolderKeys(newTree);
-        const newKeys = allKeys.filter((key) => !knownFolderKeys.value.has(key));
-        if (newKeys.length === 0) {
-            return;
-        }
-
-        knownFolderKeys.value = new Set(allKeys);
-        expandedKeys.value = mergeExpandedKeysForNewFolders(
-            expandedKeys.value,
-            newKeys,
-            paths.value,
-        );
-    },
-    { deep: true },
-);
-
-/**
- * Selected keys
- */
-const selectedKeys = ref<string[]>([]);
-
-/** BaseTree ref — 启动恢复 lastOpenedFolder 时 scrollToNode */
-const folderTreeRef = ref<InstanceType<typeof BaseTree> | null>(null);
-
-/** 用户已操作树或已完成启动滚动恢复后，禁止再自动 scrollToNode */
-const didRestoreScrollIntoView = ref(false);
-
-function markTreeScrollRestoreComplete(): void {
-    didRestoreScrollIntoView.value = true;
-}
-
-/** 用户手动展开/折叠后不再做启动恢复滚动 */
-function onTreeExpand(): void {
-    markTreeScrollRestoreComplete();
-}
+const { expandedKeys, selectedKeys, folderTreeRef, onTreeExpand, selectFolder } =
+    useFolderListTreeWatchers({
+        folderTree,
+        paths,
+        currentFolder,
+        preferenceStore,
+        weiZheng,
+    });
 
 /**
  * Show config modal
  */
 const showConfigModal = ref(false);
-
-/**
- * Select folder method - called by parent component
- */
-const selectFolder = (folderPath: string) => {
-    const normalized = canonicalFolderPath(folderPath);
-    if (normalized && normalized !== selectedKeys.value[0]) {
-        logger.debug("[FolderList] selectFolder called with:", normalized);
-        selectedKeys.value = [normalized];
-    }
-};
-
-/** RFC 0013/0047：恢复 currentFolder 时展开祖先并同步选中 */
-function syncTreeViewForCurrentFolder(folderPath: string): void {
-    const normalized = canonicalFolderPath(folderPath);
-    if (!normalized) {
-        return;
-    }
-
-    expandedKeys.value = mergeExpandedKeysForCurrentFolder(
-        expandedKeys.value,
-        normalized,
-        paths.value,
-    );
-    selectFolder(normalized);
-    void scrollRestoredFolderIntoViewOnce(normalized);
-}
-
-/** 重开 app 恢复深路径时滚入视口；folderTree 晚到可重试，仅执行一次 */
-async function scrollRestoredFolderIntoViewOnce(folderPath: string): Promise<void> {
-    if (didRestoreScrollIntoView.value) {
-        return;
-    }
-
-    const normalized = canonicalFolderPath(folderPath);
-    if (!normalized || !findTreeNode(normalized, folderTree.value as TreeNode[])) {
-        return;
-    }
-
-    await nextTick();
-    folderTreeRef.value?.scrollToNode(normalized, { align: "center", behavior: "auto" });
-    markTreeScrollRestoreComplete();
-}
-
-// currentFolder / paths 变化时同步展开与选中（勿 deep watch folderTree，避免扫描更新触发滚动）
-watch(
-    [currentFolder, paths],
-    ([newFolder]) => {
-        if (newFolder) {
-            logger.debug(
-                "[FolderList] currentFolder changed, syncing tree expand + select:",
-                newFolder,
-            );
-            syncTreeViewForCurrentFolder(newFolder);
-        }
-    },
-    { immediate: true },
-);
-
-// folderTree 晚到：仅补展开祖先，不触发滚动（扫描更新也不滚）
-watch(
-    () => folderTree.value,
-    () => {
-        const folder = currentFolder.value;
-        if (!folder) {
-            return;
-        }
-
-        expandedKeys.value = mergeExpandedKeysForCurrentFolder(
-            expandedKeys.value,
-            folder,
-            paths.value,
-        );
-    },
-);
-
-// folderTree 从空变为有数据时，补一次启动恢复滚动
-watch(
-    () => folderTree.value.length,
-    (length, previousLength) => {
-        if (length > 0 && previousLength === 0 && currentFolder.value) {
-            void scrollRestoredFolderIntoViewOnce(currentFolder.value);
-        }
-    },
-);
-/**
- * Watch the selected keys
- */
-watch(
-    selectedKeys,
-    async () => {
-        if (!isEmpty(selectedKeys.value) && currentFolder.value !== selectedKeys.value[0]) {
-            const newFolderPath = selectedKeys.value[0];
-            preferenceStore.appState.currentFolder = newFolderPath;
-
-            try {
-                const config = await weiZheng.getFolderConfig(newFolderPath);
-
-                preferenceStore.appState.currentFolderConfig =
-                    config ||
-                    ({
-                        version: "",
-                        photoList: [],
-                        lastModified: 0,
-                    } satisfies PhotasaConfig);
-            } catch (error) {
-                logger.warn("无法加载文件夹配置:", error);
-                preferenceStore.appState.currentFolderConfig = {
-                    version: "",
-                    photoList: [],
-                    lastModified: 0,
-                } satisfies PhotasaConfig;
-            }
-        }
-    },
-    { deep: true, flush: "post" },
-);
 
 /**
  * Loading info

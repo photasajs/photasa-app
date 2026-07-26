@@ -468,7 +468,8 @@
             "hide": "倉廩図司を隠す",
             "hideOthers": "他を隠す",
             "unhide": "すべてを表示",
-            "quit": "終了"
+            "quit": "終了",
+            "preferences": "環境設定…"
         },
         "view": {
             "menu": "表示",
@@ -490,9 +491,25 @@
         "help": {
             "menu": "ヘルプ",
             "learnMore": "詳細を見る",
-            "about": "倉廩図司について"
+            "about": "倉廩図司について",
+            "reportIssue": "問題を報告"
         },
-        "separator": "区切り"
+        "separator": "区切り",
+        "file": {
+            "menu": "ファイル",
+            "import": "写真をインポート",
+            "addFolder": "ライブラリフォルダを追加",
+            "scanQueue": "スキャンキュー"
+        },
+        "edit": {
+            "menu": "編集",
+            "undo": "元に戻す",
+            "redo": "やり直す",
+            "cut": "カット",
+            "copy": "コピー",
+            "paste": "ペースト",
+            "selectAll": "すべて選択"
+        }
     },
     "empty": {
         "image": "画像がありません",
@@ -647,5 +664,28 @@
             "savedMessage": "選択内容が反映されました。",
             "errorTitle": "テレメトリ設定の保存に失敗しました"
         }
+    },
+    "reportIssue": {
+        "title": "問題を報告",
+        "categoryLabel": "カテゴリ",
+        "category": {
+            "bug": "バグ",
+            "feature": "機能要望",
+            "support": "サポート",
+            "general": "一般"
+        },
+        "titleLabel": "タイトル",
+        "titlePlaceholder": "問題の概要",
+        "bodyLabel": "説明",
+        "bodyPlaceholder": "再現手順、期待する動作と実際の動作…",
+        "emailLabel": "メール（任意）",
+        "emailPlaceholder": "you@example.com",
+        "submit": "送信",
+        "cancel": "キャンセル",
+        "successTitle": "報告を送信しました",
+        "successMessage": "Issue #{number} を作成しました。",
+        "openIssue": "GitHub で表示",
+        "errorTitle": "送信に失敗しました",
+        "errorMessage": "問題を送信できませんでした。後でもう一度お試しください。"
     }
 }

@@ -301,7 +301,8 @@
             "hide": "Скрыть Photasa",
             "hideOthers": "Скрыть другие",
             "unhide": "Показать все",
-            "quit": "Выйти"
+            "quit": "Выйти",
+            "preferences": "Настройки…"
         },
         "view": {
             "menu": "Вид",
@@ -323,9 +324,25 @@
         "help": {
             "menu": "Справка",
             "learnMore": "Узнать больше",
-            "about": "О Photasa"
+            "about": "О Photasa",
+            "reportIssue": "Сообщить о проблеме"
         },
-        "separator": "Разделитель"
+        "separator": "Разделитель",
+        "file": {
+            "menu": "Файл",
+            "import": "Импорт фотографий",
+            "addFolder": "Добавить папку библиотеки",
+            "scanQueue": "Очередь сканирования"
+        },
+        "edit": {
+            "menu": "Правка",
+            "undo": "Отменить",
+            "redo": "Повторить",
+            "cut": "Вырезать",
+            "copy": "Копировать",
+            "paste": "Вставить",
+            "selectAll": "Выбрать все"
+        }
     },
     "notification": {
         "info": "Информация",
@@ -626,5 +643,28 @@
             "savedMessage": "Ваш выбор применён.",
             "errorTitle": "Не удалось сохранить настройки телеметрии"
         }
+    },
+    "reportIssue": {
+        "title": "Сообщить о проблеме",
+        "categoryLabel": "Категория",
+        "category": {
+            "bug": "Ошибка",
+            "feature": "Запрос функции",
+            "support": "Поддержка",
+            "general": "Общее"
+        },
+        "titleLabel": "Заголовок",
+        "titlePlaceholder": "Краткое описание проблемы",
+        "bodyLabel": "Описание",
+        "bodyPlaceholder": "Шаги воспроизведения, ожидаемое и фактическое поведение…",
+        "emailLabel": "Email (необязательно)",
+        "emailPlaceholder": "you@example.com",
+        "submit": "Отправить",
+        "cancel": "Отмена",
+        "successTitle": "Проблема отправлена",
+        "successMessage": "Создан issue #{number}.",
+        "openIssue": "Открыть на GitHub",
+        "errorTitle": "Не удалось отправить",
+        "errorMessage": "Не удалось отправить проблему. Попробуйте позже."
     }
 }

@@ -64,6 +64,7 @@ export const ShengzhiCommands = {
     FOLDER_DISCOVERED: "folder_discovered",
     FOLDER_REMOVED: "folder_removed",
     ADD_PATHS: "add_paths",
+    SCAN_COMPLETED: "scan_completed",
     SWITCH_FOLDER: "switch_folder",
 
     // ✅ RFC 0057: 虞世南 - 状态栏通知管理

@@ -315,7 +315,8 @@
             "hide": "隱藏倉廩圖司",
             "hideOthers": "隱藏其他",
             "unhide": "顯示全部",
-            "quit": "退出"
+            "quit": "退出",
+            "preferences": "偏好設定…"
         },
         "view": {
             "menu": "視圖",
@@ -337,9 +338,25 @@
         "help": {
             "menu": "幫助",
             "learnMore": "了解更多",
-            "about": "關於倉廩圖司"
+            "about": "關於倉廩圖司",
+            "reportIssue": "回報問題"
         },
-        "separator": "分隔符"
+        "separator": "分隔符",
+        "file": {
+            "menu": "檔案",
+            "import": "匯入照片",
+            "addFolder": "新增圖庫資料夾",
+            "scanQueue": "掃描佇列"
+        },
+        "edit": {
+            "menu": "編輯",
+            "undo": "還原",
+            "redo": "重做",
+            "cut": "剪下",
+            "copy": "拷貝",
+            "paste": "貼上",
+            "selectAll": "全選"
+        }
     },
     "notification": {
         "info": "提示",
@@ -616,5 +633,28 @@
             "savedMessage": "您的選擇已生效。",
             "errorTitle": "遙測設定失敗"
         }
+    },
+    "reportIssue": {
+        "title": "回報問題",
+        "categoryLabel": "類別",
+        "category": {
+            "bug": "錯誤",
+            "feature": "功能建議",
+            "support": "支援",
+            "general": "一般"
+        },
+        "titleLabel": "標題",
+        "titlePlaceholder": "簡要描述問題",
+        "bodyLabel": "詳細說明",
+        "bodyPlaceholder": "重現步驟、預期與實際行為…",
+        "emailLabel": "電子郵件（選填）",
+        "emailPlaceholder": "you@example.com",
+        "submit": "提交",
+        "cancel": "取消",
+        "successTitle": "問題已提交",
+        "successMessage": "感謝回饋！已建立 Issue #{number}。",
+        "openIssue": "在 GitHub 查看",
+        "errorTitle": "提交失敗",
+        "errorMessage": "無法提交問題，請稍後再試。"
     }
 }

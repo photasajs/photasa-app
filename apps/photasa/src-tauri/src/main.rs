@@ -121,6 +121,7 @@ fn main() {
             // 目录存储与文件监视状态
             app.manage(directory::DirectoryStore(Mutex::new(HashMap::new())));
             app.manage(watch::WatchState::new());
+            app.manage(menu::MenuState::new());
             match ScanQueueRepository::load_default() {
                 Ok(repo) => {
                     log::info!(
@@ -261,6 +262,7 @@ fn main() {
             thumbnail::remove_thumbnail,
             // 系统菜单
             menu::apply_system_menu,
+            menu::update_menu_item,
             // Stub 命令（待逐步替换）
             stubs::scan_photos,
             import_scan_directories::scan_directories,

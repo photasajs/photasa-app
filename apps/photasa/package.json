@@ -20,7 +20,8 @@
         "baseline:locales": "node scripts/generate-locale-coverage-baseline.mjs",
         "typecheck": "tsc --noEmit",
         "test:unit:api": "vitest run --config vitest.config.ts src/api/__tests__",
-        "test:unit": "vitest run --config vitest.config.ts"
+        "test:unit": "vitest run --config vitest.config.ts",
+        "test:regression:titlebar": "vitest run --config vitest.config.ts src/components/__tests__/titlebar-regression.guard.test.ts src/components/__tests__/TitlebarMac.drag.test.ts"
     },
     "dependencies": {
         "@headlessui/vue": "^1.7.23",
