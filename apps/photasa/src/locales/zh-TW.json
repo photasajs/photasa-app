@@ -337,9 +337,10 @@
         },
         "help": {
             "menu": "幫助",
-            "learnMore": "了解更多",
             "about": "關於倉廩圖司",
-            "reportIssue": "回報問題"
+            "reportIssue": "回報問題…",
+            "explorePhotasa": "探索 Photasa",
+            "gettingStarted": "Photasa 入門指南"
         },
         "separator": "分隔符",
         "file": {

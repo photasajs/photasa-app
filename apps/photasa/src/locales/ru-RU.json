@@ -323,9 +323,10 @@
         },
         "help": {
             "menu": "Справка",
-            "learnMore": "Узнать больше",
             "about": "О Photasa",
-            "reportIssue": "Сообщить о проблеме"
+            "reportIssue": "Сообщить о проблеме…",
+            "explorePhotasa": "Обзор Photasa",
+            "gettingStarted": "Начало работы с Photasa"
         },
         "separator": "Разделитель",
         "file": {

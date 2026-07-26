@@ -13,7 +13,7 @@ use std::sync::{Mutex, OnceLock};
 #[cfg(target_os = "macos")]
 use tauri::menu::{
     Menu, MenuItem, MenuItemBuilder, MenuItemKind, PredefinedMenuItem, Submenu, SubmenuBuilder,
-    WINDOW_SUBMENU_ID,
+    HELP_SUBMENU_ID, WINDOW_SUBMENU_ID,
 };
 #[cfg(target_os = "macos")]
 use tauri::Emitter;
@@ -131,10 +131,6 @@ fn build_and_set_menu(
 
     for group in &menus {
         let submenu = build_submenu(app, group)?;
-        if group.key == "help" {
-            let item_count = group.items.as_ref().map(|items| items.len()).unwrap_or(0);
-            log::info!("📋 构建 Help 系统子菜单：{item_count} 项");
-        }
         menu.append(&submenu).map_err(|e| e.to_string())?;
     }
 
@@ -265,13 +261,12 @@ fn patch_normal_menu_item(
 
 /// 前端业务 key → Tauri/muda 原生子菜单 id
 ///
-/// HELP_SUBMENU_ID 不可用：muda#263 / muda#301（tauri-apps 官方确认重复问题，未修复）
-/// 证实无论是否显式注册 set_as_help_menu_for_nsapp，用 HELP_SUBMENU_ID 构建的子菜单
-/// 自定义项都不渲染（截至本次排查，上游无可用修复）。Help 改用业务 key 作为普通子菜单 id。
-/// WINDOW_SUBMENU_ID 保留：已验证正常渲染（Minimize/Zoom/Close Window 均可见）。
+/// muda 0.17.2 修复 macOS Help/Window 菜单注册到错误 NSMenu 实例的问题。
+/// 使用 Tauri 原生 id，让 `AppHandle::set_menu` 在挂载主菜单后注册特殊子菜单。
 #[cfg(target_os = "macos")]
 fn submenu_native_id(key: &str) -> &str {
     match key {
+        "help" => HELP_SUBMENU_ID,
         "window" => WINDOW_SUBMENU_ID,
         _ => key,
     }
@@ -283,12 +278,9 @@ fn build_submenu(app: &AppHandle, data: &MenuItemData) -> Result<Submenu<tauri::
 
     if let Some(items) = &data.items {
         for item in items {
-            if item.is_mac_only == Some(true) {
-                #[cfg(not(target_os = "macos"))]
-                continue;
-            }
-
-            if item.item_type.as_deref() == Some("separator") || item.role.as_deref() == Some("separator") {
+            if item.item_type.as_deref() == Some("separator")
+                || item.role.as_deref() == Some("separator")
+            {
                 builder = builder.separator();
                 continue;
             }
@@ -301,24 +293,28 @@ fn build_submenu(app: &AppHandle, data: &MenuItemData) -> Result<Submenu<tauri::
             }
 
             if item.items.as_ref().map(|v| !v.is_empty()).unwrap_or(false) {
-                let sub = build_submenu(app, item)?;
-                builder = builder.item(&sub);
+                let submenu = build_submenu(app, item)?;
+                builder = builder.item(&submenu);
                 continue;
             }
 
             if item.label.trim().is_empty() {
-                return Err(format!("菜单项 {} 的 label 为空，无法构建系统菜单", item.key));
+                return Err(format!(
+                    "菜单项 {} 的 label 为空，无法构建系统菜单",
+                    item.key
+                ));
             }
 
-            let mut mb = MenuItemBuilder::with_id(&item.key, &item.label).enabled(true);
+            let mut menu_item =
+                MenuItemBuilder::with_id(&item.key, &item.label).enabled(true);
             if item.disabled == Some(true) {
-                mb = mb.enabled(false);
+                menu_item = menu_item.enabled(false);
             }
-            if let Some(acc) = &item.shortcut {
-                mb = mb.accelerator(acc);
+            if let Some(accelerator) = &item.shortcut {
+                menu_item = menu_item.accelerator(accelerator);
             }
-            let mi = mb.build(app).map_err(|e| e.to_string())?;
-            builder = builder.item(&mi);
+            let menu_item = menu_item.build(app).map_err(|e| e.to_string())?;
+            builder = builder.item(&menu_item);
         }
     }
 
@@ -367,23 +363,23 @@ mod tests {
 
     #[test]
     #[cfg(target_os = "macos")]
-    fn submenu_native_id_maps_window_to_tauri_id_but_not_help() {
-        // muda#263 / muda#301: HELP_SUBMENU_ID 子菜单自定义项不渲染，help 必须走普通 id
-        assert_eq!(submenu_native_id("help"), "help");
+    fn submenu_native_id_maps_help_and_window_to_tauri_ids() {
+        assert_eq!(submenu_native_id("help"), HELP_SUBMENU_ID);
         assert_eq!(submenu_native_id("window"), WINDOW_SUBMENU_ID);
         assert_eq!(submenu_native_id("file"), "file");
     }
 
     #[test]
-    fn help_menu_payload_includes_report_issue_item() {
+    fn help_menu_payload_includes_rfc_0171_items() {
         let menus: Vec<MenuItemData> = serde_json::from_str(
             r#"[
               {
                 "key": "help",
                 "label": "Help",
                 "items": [
-                  { "key": "help-report-issue", "label": "Report Issue" },
-                  { "key": "help-learn-more", "label": "Learn More", "url": "https://photasa.me" },
+                  { "key": "help-report-issue", "label": "Report Issue…" },
+                  { "key": "help-explore-photasa", "label": "Explore Photasa", "url": "https://photasa.me" },
+                  { "key": "help-getting-started", "label": "Getting Started with Photasa", "url": "https://photasa.me/docs" },
                   { "key": "help-about", "label": "About Photasa", "shortcut": "F1" }
                 ]
               }
@@ -401,6 +397,8 @@ mod tests {
             .collect();
 
         assert!(keys.contains(&"help-report-issue"));
-        assert_eq!(keys.len(), 3);
+        assert!(keys.contains(&"help-explore-photasa"));
+        assert!(keys.contains(&"help-getting-started"));
+        assert!(keys.contains(&"help-about"));
     }
 }

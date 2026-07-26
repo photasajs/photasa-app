@@ -5,12 +5,15 @@ import {
     MENU_KEY_FILE_IMPORT,
     MENU_KEY_FILE_SCAN_QUEUE,
     MENU_KEY_HELP_ABOUT,
+    MENU_KEY_HELP_EXPLORE,
+    MENU_KEY_HELP_GETTING_STARTED,
     MENU_KEY_HELP_REPORT_ISSUE,
     MENU_KEY_VIEW_FORCE_RELOAD,
     MENU_KEY_VIEW_RELOAD,
     MENU_KEY_WINDOW_CLOSE,
     MENU_KEY_WINDOW_MAXIMIZE,
 } from "../../constants/menu-keys";
+import { PHOTASA_ME_DOCS_URL, PHOTASA_ME_HOMEPAGE_URL } from "../../constants/photasa-me-api";
 
 export const SystemMenus: readonly MenuItemData[] = Object.freeze([
     // macOS 专属 appMenu（RFC 0169: 增加 Preferences）
@@ -185,7 +188,7 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
             },
         ],
     },
-    // Help 菜单（Report Issue 置顶，避免 macOS Help 自动合并时中间项丢失）
+    // Help 菜单（RFC 0171：Report Issue → Explore → Getting Started → About）
     {
         key: "help",
         label: "menu.help.menu",
@@ -201,9 +204,20 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
                 type: "separator",
             },
             {
-                key: "help-learn-more",
-                label: "menu.help.learnMore",
-                url: "https://photasa.me",
+                key: MENU_KEY_HELP_EXPLORE,
+                label: "menu.help.explorePhotasa",
+                url: PHOTASA_ME_HOMEPAGE_URL,
+            },
+            {
+                key: MENU_KEY_HELP_GETTING_STARTED,
+                label: "menu.help.gettingStarted",
+                url: PHOTASA_ME_DOCS_URL,
+            },
+            {
+                key: "help-separator-2",
+                label: "menu.separator",
+                role: "separator",
+                type: "separator",
             },
             { key: MENU_KEY_HELP_ABOUT, label: "menu.help.about", shortcut: "F1" },
         ],

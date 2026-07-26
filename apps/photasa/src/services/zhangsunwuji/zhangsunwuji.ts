@@ -232,7 +232,7 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
      *
      * 根据菜单项 key 分发到相应服务或处理：
      * - 有 role 的菜单项：由 contract reference 自动处理（如 reload, quit, about 等）
-     * - 有 url 的菜单项：打开外部链接（如 help.learnMore）
+     * - 有 url 的菜单项：打开外部链接（如 help.explorePhotasa）
      * - 其他菜单项：根据 key 分发到相应服务或 emit 事件
      */
     handleMenuAction(payload: MenuActionPayload): void {

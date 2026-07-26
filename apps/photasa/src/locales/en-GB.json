@@ -344,9 +344,10 @@
         },
         "help": {
             "menu": "Help",
-            "learnMore": "Learn More",
             "about": "About Photasa",
-            "reportIssue": "Report Issue"
+            "reportIssue": "Report Issue…",
+            "explorePhotasa": "Explore Photasa",
+            "gettingStarted": "Getting Started with Photasa"
         },
         "separator": "Separator",
         "file": {

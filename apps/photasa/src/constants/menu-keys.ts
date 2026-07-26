@@ -4,6 +4,8 @@
 export const MENU_KEY_VIEW_RELOAD = "view-reload" as const;
 export const MENU_KEY_VIEW_FORCE_RELOAD = "view-force-reload" as const;
 export const MENU_KEY_HELP_REPORT_ISSUE = "help-report-issue" as const;
+export const MENU_KEY_HELP_EXPLORE = "help-explore-photasa" as const;
+export const MENU_KEY_HELP_GETTING_STARTED = "help-getting-started" as const;
 export const MENU_KEY_HELP_ABOUT = "help-about" as const;
 
 /** RFC 0169: App 菜单 */

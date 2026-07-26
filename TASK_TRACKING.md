@@ -36,7 +36,7 @@
 | 物理清理 14 个废弃 Node 包   | [0164](./.spec/rfc/completed/0164-cleanup-legacy-node-packages.md)                 | 🔴 High   | ✅ Done — 删 14 legacy 包；`packages/@photasa/` 剩 `common` + `base-tree`；lockfile 刷新            | 否                                  |
 | BaseTree 包 + 启动树恢复     | [0165](./.spec/rfc/completed/0165-base-tree-package-and-folder-restore.md)         | 🟡 Medium | ✅ Done — `@photasa/base-tree` 包；**2026-07-25 Amendment**：FolderList `virtual=false`、展开不跳顶 | 否                                  |
 | ImageList 悬停操作栏         | [0166](./.spec/rfc/completed/0166-imagelist-hover-action-bar.md)                   | 🟢 Low    | ✅ Done — `ImageListItem` 三按钮悬停栏 + Vitest（2026-07-24）                                       | 否                                  |
-| macOS 原生 Help 菜单         | [0171](./.spec/rfc/0171-macos-native-help-menu.md)                                 | 🟡 Medium | ⏳ Active — Search + Report Issue + Explore + Getting Started；依赖 RFC 0170 结论                   | 否                                  |
+| macOS 原生 Help 菜单         | [0171](./.spec/rfc/0171-macos-native-help-menu.md)                                 | 🟡 Medium | ✅ Done — Search + Report Issue + Explore + Getting Started（RFC 0171）                             | 否                                  |
 | PostHog 遥测 + 同意机制      | [0163](./.spec/rfc/completed/0163-tauri-posthog-telemetry.md)                      | 🟡 Medium | ✅ Done — Rust/Vue PostHog、三态 consent、Settings 撤回；Vitest + Rust tests                        | 否                                  |
 
 ### RFC 0154 — 退役 legacy-api / utils/api ✅ Done（2026-07-24）

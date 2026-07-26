@@ -320,9 +320,10 @@
         },
         "help": {
             "menu": "Aiuto",
-            "learnMore": "Scopri di più",
             "about": "Informazioni su Photasa",
-            "reportIssue": "Segnala un problema"
+            "reportIssue": "Segnala un problema…",
+            "explorePhotasa": "Esplora Photasa",
+            "gettingStarted": "Inizia con Photasa"
         },
         "separator": "Separatore",
         "file": {

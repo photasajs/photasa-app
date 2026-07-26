@@ -4,7 +4,7 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: 🟢 Approved（用户已确认全部改动清单，待实施）
+**Status**: ✅ Implemented（2026-07-26；Help 完整交付见 RFC 0171）
 **Created**: 2026-07-25
 **Area**: Tauri / macOS System Menu / UI
 **Related**: RFC 0058（菜单管理统一到 qizou 流程）、RFC 0092（Tauri v2 Menu API 系统菜单）、RFC 0149/0150（shell + menu 直连例外）

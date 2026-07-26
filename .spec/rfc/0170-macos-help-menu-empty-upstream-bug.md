@@ -1,13 +1,14 @@
-# RFC 0170 – macOS 系统菜单 Help 子菜单空白（上游未修复问题）
+# RFC 0170 – macOS 系统菜单 Help 子菜单空白（muda 0.17.1 上游问题）
 
 ## Implementation principle (Photasa / Tauri)
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: 🟡 Mitigated（应用内已加旁路入口，系统菜单 Help 子菜单本身未修复，取决于上游）
+**Status**: ✅ Resolved（muda 0.17.2 修复特殊菜单注册；Photasa 启动 IPC 时序修复见 RFC 0171）
 **Created**: 2026-07-25
+**Updated**: 2026-07-26
 **Area**: Tauri / macOS System Menu
-**Related**: RFC 0169（菜单重设计）
+**Related**: RFC 0169（菜单重设计）、RFC 0171（原生 Help 菜单）
 
 ---
 
@@ -31,9 +32,9 @@ macOS 系统菜单栏的 `Help` 子菜单点开后完全空白（不含任何自
 
 **结果：仍然空白。** 且额外引入了新问题（见下方"实施中的连带事故"）。
 
-### 结论：确认为上游未修复的已知 bug，非本仓库代码问题
+### 当时结论（后被 muda 0.17.2 与运行时证据修正）
 
-继续查证，找到两个直接相关的上游 Issue，均已关闭但**均未实际修复**：
+继续查证时找到两个直接相关的上游 Issue；它们描述的是 `muda 0.17.1` 及更早版本的真实缺陷，后续已由 muda PR #335 修复：
 
 1. **[tauri-apps/muda#263](https://github.com/tauri-apps/muda/issues/263)** ——`set_as_help_menu_for_nsapp` / `set_as_windows_menu_for_nsapp` 在 macOS 上均失效。维护者 `kasper9n` 在评论中确认：调用 `NSApplication::setHelpMenu` 后 `NSApplication::helpMenu()` 确实返回了菜单对象，但显示效果依旧不对，且尝试了三种变通方案均未成功（更早/更晚调用 `setHelpMenu`、调用 `NSMenu::setTitle`、改用原生 `NSMenuItem` 而非子类化）。**Issue 已关闭，无解决方案。**
 
@@ -49,27 +50,36 @@ macOS 系统菜单栏的 `Help` 子菜单点开后完全空白（不含任何自
 
 **教训**：`enable_macos_default_menu(false)` 只有在自定义菜单是**同步、启动期必然成功**构建时才安全使用；本应用的菜单构建路径是异步 IPC 往返，不满足这个前提，不应使用该开关。
 
-## 当前代码状态
+## 根因最终确认与修复（2026-07-26）
 
-- `menu.rs::submenu_native_id`：`window` 仍映射到 `WINDOW_SUBMENU_ID`（已验证正常渲染：Minimize/Zoom/Close Window 均可见）；`help` 改回普通业务 key（`"help"`），不使用 `HELP_SUBMENU_ID`。
-- `main.rs`：`enable_macos_default_menu(false)` 已移除，恢复 Tauri 默认菜单兜底。
-- 净效果：Help 子菜单退回到与 File/Edit 一致的"普通子菜单"渲染路径——**这仍然可能空白**，因为假设 2（AppKit 按标题文字 "Help" 自动接管）不依赖 id，只依赖标题文字，尚未针对"普通子菜单 + 标题不叫 Help"的组合做实测验证。
+`Cargo.lock` 确认 muda 已固定在 0.17.2（通过 `tauri` crate 传递依赖，无需改 `Cargo.toml`）。查证 muda 0.17.2 changelog：
+
+> `372d367`（PR #335）Fix `Submenu::set_as_help_menu_for_nsapp` and `Submenu::set_as_windows_menu_for_nsapp` not working and macOS wouldn't recognize and add default menu items to them.
+
+即 muda#263 / muda#301 描述的特殊菜单注册 bug 已在 0.17.2 修复。Photasa 需要：
+
+- `menu.rs::submenu_native_id`：`help` 映射回 `HELP_SUBMENU_ID`；`window` 仍映射 `WINDOW_SUBMENU_ID`。
+- `menu.rs::build_and_set_menu`：调用 `AppHandle::set_menu`；Tauri 2.10.3 的 `init_app_menu` 根据 `HELP_SUBMENU_ID` 取回 Help 子菜单并调用 `.set_as_help_menu_for_nsapp()`，应用代码无需重复注册。
+- `main.rs`：`enable_macos_default_menu(false)` 保持移除状态（RFC 0170 记录的连带事故教训不变，与本次修复无关）。
+- `App.vue`：`zhangSunWuJi.refreshMenus(t)` 必须位于主题、遥测、扫描等异步启动任务之前。
+
+第二阶段“Search 存在、Report Issue 不存在”的应用根因不是 AppKit 标题覆盖，而是 `apply_system_menu` **根本没有执行**。诊断日志在两套 Rust workaround 中均未出现；把 `refreshMenus` 移到第一个无关 `await` 之前后，Rust 立即收到 6 组菜单及完整 Help 项：
+
+```text
+["app", "file", "edit", "view", "window", "help"]
+["help-report-issue", "help-separator-1", "help-learn-more", "help-about"]
+```
+
+此前尝试的“非保留标题挂载”和“注册空 Help 后再 append”都修改了未执行路径，不能证明 AppKit 行为，已删除。最终保留标准 Tauri/muda 构建路径。用户实机确认 Search 与 Report Issue 同时显示。
 
 ## 应用内旁路方案（已实施，绕开系统菜单本身）
 
-鉴于系统菜单 Help 子菜单的可靠性完全取决于未修复的上游 bug，在标题栏（`TitlebarMac.vue` / `TitlebarWinLinux.vue`）右上角图标区新增 Report Issue 入口（复用已有 `services/report-issue-dialog.ts::openReportIssueDialog`，与系统菜单走同一个对话框，同一套已验证工作正常的提交链路），作为不依赖系统菜单是否渲染成功的稳定入口。系统菜单 Help 子菜单本身保持现状（可能空白），不作为唯一入口。
+标题栏（`TitlebarMac.vue` / `TitlebarWinLinux.vue`）Report Issue 入口继续保留为二级入口。系统 Help 已恢复，不再依赖该旁路兜底。
 
 ## Non-goals
 
-- 未修复上游 `muda`/AppKit 的 Help 菜单自动接管 bug——无法在应用层完全修复，需等待上游或改用更底层的 workaround（见下方候选方向）。
-- 未验证"改变 Help 子菜单标题文字（不叫 'Help'）是否能绕过 AppKit 的自动识别"这一假设——本次未做该实验，留给下次排查。
-- 未采用 `chrox` 在 tauri-apps/tauri#13605 评论中的 workaround（`set_menu` 后显式 `menu.remove()` 掉 AppKit 自动注入的 Help 项，再 `append` 全新子菜单）——该方案理论上可能绕过问题，但涉及在应用启动后对已生效的 `NSMenu` 做二次外科手术式修改，风险及维护成本较高，本次评估后未采用，留作候选方向。
-
-## 候选后续方向（未实施，供下次决策）
-
-1. **验证非 "Help" 标题文字是否绕开自动识别**——最小改动，风险低，但可能需要放弃"看起来像标准 macOS Help 菜单"这个视觉预期。
-2. **`chrox` 的 remove+append workaround**——见上方 Non-goals，若方向 1 验证无效再考虑。
-3. **完全放弃系统菜单 Help 子菜单**，只保留应用内标题栏按钮（本次已实施的旁路）作为唯一入口，系统菜单栏不再包含 Help 顶级菜单——最彻底但改变了菜单结构，需要重新走 RFC 0169 的用户确认流程。
+- 不为已修复的 `muda 0.17.1` 问题保留 Objective-C、改标题或二阶段 append workaround。
+- 不在 RFC 0170 扩展 Help 产品条目；后续内容归 RFC 0171。
 
 ## References
 
@@ -77,6 +87,7 @@ macOS 系统菜单栏的 `Help` 子菜单点开后完全空白（不含任何自
 - [tauri-apps/tauri#13605](https://github.com/tauri-apps/tauri/issues/13605) — Window and Help menu are not working on MacOS（含 `chrox` 的 workaround 补丁）
 - [tauri-apps/muda#263](https://github.com/tauri-apps/muda/issues/263) — `set_as_help_menu_for_nsapp` and `set_as_windows_menu_for_nsapp` are broken on macOS
 - [tauri-apps/muda#301](https://github.com/tauri-apps/muda/issues/301) — 与本仓库场景完全一致的复现报告
+- [tauri-apps/muda#335](https://github.com/tauri-apps/muda/pull/335) — 0.17.2 特殊菜单注册修复
 - `apps/photasa/src-tauri/src/commands/menu.rs`
 - `apps/photasa/src-tauri/src/main.rs`
 - `apps/photasa/src/services/report-issue-dialog.ts`
