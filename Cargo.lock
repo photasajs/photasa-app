@@ -3838,7 +3838,7 @@ dependencies = [
 
 [[package]]
 name = "photasa"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3888,7 +3888,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-config"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "photasa-media",
  "serde",
@@ -3898,7 +3898,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-folder-tree"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "chrono",
  "dirs 5.0.1",
@@ -3911,7 +3911,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-import"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "chrono",
  "filetime",
@@ -3926,14 +3926,14 @@ dependencies = [
 
 [[package]]
 name = "photasa-media"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "photasa-types",
 ]
 
 [[package]]
 name = "photasa-preference"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -3944,7 +3944,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-scan"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "async-trait",
  "filetime",
@@ -3960,7 +3960,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-thumbnail"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "ffmpeg-next",
  "image",
@@ -3972,7 +3972,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-types"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -3981,7 +3981,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-watch"
-version = "2.1.1"
+version = "2.2.0"
 dependencies = [
  "log",
  "photasa-types",
