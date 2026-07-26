@@ -35,6 +35,8 @@ pub struct MenuItemData {
     pub url: Option<String>,
     #[serde(rename = "isMacOnly")]
     pub is_mac_only: Option<bool>,
+    #[serde(rename = "excludeOnMac")]
+    pub exclude_on_mac: Option<bool>,
     pub items: Option<Vec<MenuItemData>>,
     #[serde(rename = "type")]
     pub item_type: Option<String>,
@@ -278,6 +280,11 @@ fn build_submenu(app: &AppHandle, data: &MenuItemData) -> Result<Submenu<tauri::
 
     if let Some(items) = &data.items {
         for item in items {
+            if item.exclude_on_mac == Some(true) {
+                #[cfg(target_os = "macos")]
+                continue;
+            }
+
             if item.item_type.as_deref() == Some("separator")
                 || item.role.as_deref() == Some("separator")
             {
@@ -359,6 +366,15 @@ mod tests {
         .unwrap();
         assert_eq!(item.key, "file-import");
         assert_eq!(item.is_mac_only, Some(true));
+    }
+
+    #[test]
+    fn menu_item_data_deserializes_exclude_on_mac() {
+        let item: MenuItemData = serde_json::from_str(
+            r#"{"key":"window-close","label":"Close Window","excludeOnMac":true}"#,
+        )
+        .unwrap();
+        assert_eq!(item.exclude_on_mac, Some(true));
     }
 
     #[test]

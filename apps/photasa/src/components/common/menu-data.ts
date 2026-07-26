@@ -185,6 +185,8 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
                 key: MENU_KEY_WINDOW_CLOSE,
                 label: "menu.window.close",
                 shortcut: "Ctrl+W",
+                // macOS AppKit 会在 File 菜单注入 Close Window；Window 内保留会重复
+                excludeOnMac: true,
             },
         ],
     },
