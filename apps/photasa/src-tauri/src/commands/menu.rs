@@ -269,17 +269,11 @@ fn patch_normal_menu_item(
 /// 证实无论是否显式注册 set_as_help_menu_for_nsapp，用 HELP_SUBMENU_ID 构建的子菜单
 /// 自定义项都不渲染（截至本次排查，上游无可用修复）。Help 改用业务 key 作为普通子菜单 id。
 /// WINDOW_SUBMENU_ID 保留：已验证正常渲染（Minimize/Zoom/Close Window 均可见）。
+#[cfg(target_os = "macos")]
 fn submenu_native_id(key: &str) -> &str {
-    #[cfg(target_os = "macos")]
-    {
-        match key {
-            "window" => WINDOW_SUBMENU_ID,
-            _ => key,
-        }
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        key
+    match key {
+        "window" => WINDOW_SUBMENU_ID,
+        _ => key,
     }
 }
 
