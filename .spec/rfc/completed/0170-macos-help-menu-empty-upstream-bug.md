@@ -4,9 +4,10 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: ✅ Resolved（muda 0.17.2 修复特殊菜单注册；Photasa 启动 IPC 时序修复见 RFC 0171）
+**Status**: ✅ Completed（muda 0.17.2 修复特殊菜单注册；Photasa 启动 IPC 时序修复见 RFC 0171）
 **Created**: 2026-07-25
 **Updated**: 2026-07-26
+**Path**: `.spec/rfc/completed/0170-macos-help-menu-empty-upstream-bug.md`
 **Area**: Tauri / macOS System Menu
 **Related**: RFC 0169（菜单重设计）、RFC 0171（原生 Help 菜单）
 

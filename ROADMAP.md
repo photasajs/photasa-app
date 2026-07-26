@@ -65,7 +65,7 @@ RFC 索引与流程说明**以本节与根目录 [`TASK_TRACKING.md`](./TASK_TRA
 | 指标                                                              | 数量（基准日 2026-04-05） |
 | ----------------------------------------------------------------- | ------------------------- |
 | RFC 正文 `.md`（含 `completed/` / `rejected/`，不含 `README.md`） | 128                       |
-| 已归档于 `.spec/rfc/completed/`                                   | 75                        |
+| 已归档于 `.spec/rfc/completed/`                                   | 78                        |
 | 已归档于 `.spec/rfc/rejected/`                                    | 2                         |
 
 Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **Photasa Active RFCs**、**Photasa UI RFC drafts（非 Active）** 与 **Legacy backlog** 为准。
@@ -172,9 +172,9 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0165](.spec/rfc/completed/0165-base-tree-package-and-folder-restore.md)           | `@photasa/base-tree` 包 + 启动树选中恢复 + 虚拟化无回归                                  | ✅ Implemented — `@photasa/base-tree` 包；启动展开+选中；**2026-07-25 Amendment**：FolderList 侧栏 `virtual=false`、展开不跳顶（见 RFC Amendment + skill `base-tree-folder-scroll`） |
 | [0166](.spec/rfc/completed/0166-imagelist-hover-action-bar.md)                     | ImageList 悬停操作栏（详情 / 重建缩略图 / 在 Finder 打开）                               | ✅ Implemented — `ImageListItem` + 三按钮悬停栏                                                                                                                                      |
 | [0168](.spec/rfc/0168-import-target-not-watched.md)                                | 导入目标目录未纳入 watch 路径（结构性缺口）                                              | 🔴 Blocked — 根因已坐实，修复方案未选定                                                                                                                                              |
-| [0169](.spec/rfc/0169-menu-redesign-common-and-photasa-domain.md)                  | 菜单重设计：File/Edit/Window + 增量 `update_menu_item`                                   | ✅ Implemented — RFC 0169 菜单 + Report Issue 链路                                                                                                                                   |
-| [0170](.spec/rfc/0170-macos-help-menu-empty-upstream-bug.md)                       | macOS Help 子菜单空白（muda 上游）                                                       | ✅ Resolved — `muda 0.17.2` 修复特殊菜单注册；Photasa 启动 IPC 时序见 RFC 0171                                                                                                       |
-| [0171](.spec/rfc/0171-macos-native-help-menu.md)                                   | macOS 原生 Help 菜单（Search + Report Issue + Explore + Getting Started）                | ✅ Implemented — 完整 Help 项 + i18n；muda 0.17.2 + HELP_SUBMENU_ID                                                                                                                  |
+| [0169](.spec/rfc/completed/0169-menu-redesign-common-and-photasa-domain.md)        | 菜单重设计：File/Edit/Window + 增量 `update_menu_item`                                   | ✅ Closed — 菜单 + Report Issue + 编辑/最小化 i18n（`9e0026ca`）                                                                                                                     |
+| [0170](.spec/rfc/completed/0170-macos-help-menu-empty-upstream-bug.md)             | macOS Help 子菜单空白（muda 上游）                                                       | ✅ Closed — `muda 0.17.2` 修复特殊菜单注册；启动 IPC 时序见 RFC 0171                                                                                                                 |
+| [0171](.spec/rfc/completed/0171-macos-native-help-menu.md)                         | macOS 原生 Help 菜单（Search + Report Issue + Explore + Getting Started）                | ✅ Closed — Help 项 + i18n；`HELP_SUBMENU_ID`；AppKit 注入项为已知限制                                                                                                               |
 | [0157](.spec/rfc/completed/0157-tauri-dev-prod-side-by-side.md)                    | Dev/Prod 版 Photasa 同机并存（独立 identifier/数据目录）                                 | ✅ Implemented — 脚本表见 [apps/photasa/DEVELOPMENT.md](apps/photasa/DEVELOPMENT.md)                                                                                                 |
 
 ### Photasa next priorities（2026-07）

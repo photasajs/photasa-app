@@ -4,9 +4,10 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: ✅ Implemented（muda 0.17.2 + HELP_SUBMENU_ID + 完整 Help 菜单项）
+**Status**: ✅ Completed（muda 0.17.2 + HELP_SUBMENU_ID + 完整 Help 菜单项 + 菜单 i18n）
 **Created**: 2026-07-25
 **Updated**: 2026-07-26
+**Path**: `.spec/rfc/completed/0171-macos-native-help-menu.md`
 **Area**: Tauri / macOS System Menu / Help
 **Related**: RFC 0169（菜单重设计）、RFC 0170（Help 子菜单空白上游问题）、RFC 0152（标题栏拖拽契约）
 

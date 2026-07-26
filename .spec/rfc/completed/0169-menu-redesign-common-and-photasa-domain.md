@@ -4,8 +4,10 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: ✅ Implemented（2026-07-26；Help 完整交付见 RFC 0171）
+**Status**: ✅ Completed（2026-07-26；Help 完整交付见 RFC 0171；菜单 i18n 见 `9e0026ca`）
 **Created**: 2026-07-25
+**Updated**: 2026-07-26
+**Path**: `.spec/rfc/completed/0169-menu-redesign-common-and-photasa-domain.md`
 **Area**: Tauri / macOS System Menu / UI
 **Related**: RFC 0058（菜单管理统一到 qizou 流程）、RFC 0092（Tauri v2 Menu API 系统菜单）、RFC 0149/0150（shell + menu 直连例外）
 
