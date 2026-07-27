@@ -36,7 +36,7 @@
         "@vueuse/rxjs": "^13.2.0",
         "dayjs": "^1.11.18",
         "exifreader": "^4.41.3",
-        "file-type": "^21.0.0",
+        "file-type": "^22.0.1",
         "image-type": "^5.2.0",
         "json-tree-view-vue3": "^2.0.0",
         "log4js": "^6.9.1",
