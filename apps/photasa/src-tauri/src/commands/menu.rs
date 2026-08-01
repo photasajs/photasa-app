@@ -138,6 +138,14 @@ fn build_and_set_menu(
 
     app.set_menu(menu.clone()).map_err(|e| e.to_string())?;
 
+    if let Some(help_data) = menus.iter().find(|group| group.key == "help") {
+        if let Some(tauri::menu::MenuItemKind::Submenu(help_submenu)) = menu.get(HELP_SUBMENU_ID) {
+            help_submenu
+                .set_text(&help_data.label)
+                .map_err(|e| e.to_string())?;
+        }
+    }
+
     let mut guard = menu_state
         .menu
         .lock()
@@ -274,9 +282,22 @@ fn submenu_native_id(key: &str) -> &str {
     }
 }
 
+/// AppKit 在 `setMainMenu` 挂载时按标题文字（本地化 "Help"）自动接管子菜单，
+/// 抢先清空其中的自定义项，早于 `HELP_SUBMENU_ID` 的显式注册生效（RFC 0171）。
+/// 挂载期用非保留标题占位绕开文字触发；`set_menu` 完成 id 注册后，
+/// `build_and_set_menu` 再用 `Submenu::set_text` 改回本地化标题
+/// （此时 NSMenu 已绑定，改名不会重新触发清空）。
+#[cfg(target_os = "macos")]
+const HELP_MENU_MOUNT_TITLE: &str = "Photasa Help";
+
 #[cfg(target_os = "macos")]
 fn build_submenu(app: &AppHandle, data: &MenuItemData) -> Result<Submenu<tauri::Wry>, String> {
-    let mut builder = SubmenuBuilder::with_id(app, submenu_native_id(&data.key), &data.label);
+    let mount_title = if data.key == "help" {
+        HELP_MENU_MOUNT_TITLE
+    } else {
+        data.label.as_str()
+    };
+    let mut builder = SubmenuBuilder::with_id(app, submenu_native_id(&data.key), mount_title);
 
     if let Some(items) = &data.items {
         for item in items {
