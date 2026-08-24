@@ -1,0 +1,13 @@
+[package]
+name = "design-thumbnail"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hayro = "=0.7.1"
+image = { version = "=0.25.10", default-features = false, features = ["jpeg", "png"] }
+psd = "=0.3.5"
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"

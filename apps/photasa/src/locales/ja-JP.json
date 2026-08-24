@@ -490,9 +490,10 @@
         },
         "help": {
             "menu": "ヘルプ",
-            "learnMore": "詳細を見る",
             "about": "倉廩図司について",
-            "reportIssue": "問題を報告"
+            "reportIssue": "問題を報告…",
+            "explorePhotasa": "Photasa を探索",
+            "gettingStarted": "Photasa をはじめる"
         },
         "separator": "区切り",
         "file": {

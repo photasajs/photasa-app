@@ -4,6 +4,8 @@
 export const MENU_KEY_VIEW_RELOAD = "view-reload" as const;
 export const MENU_KEY_VIEW_FORCE_RELOAD = "view-force-reload" as const;
 export const MENU_KEY_HELP_REPORT_ISSUE = "help-report-issue" as const;
+export const MENU_KEY_HELP_EXPLORE = "help-explore-photasa" as const;
+export const MENU_KEY_HELP_GETTING_STARTED = "help-getting-started" as const;
 export const MENU_KEY_HELP_ABOUT = "help-about" as const;
 
 /** RFC 0169: App 菜单 */
@@ -15,5 +17,18 @@ export const MENU_KEY_FILE_ADD_FOLDER = "file-add-folder" as const;
 export const MENU_KEY_FILE_SCAN_QUEUE = "file-scan-queue" as const;
 
 /** RFC 0169: Window 菜单（自定义处理，无 role） */
+export const MENU_KEY_WINDOW_MINIMIZE = "window-minimize" as const;
 export const MENU_KEY_WINDOW_MAXIMIZE = "window-maximize" as const;
 export const MENU_KEY_WINDOW_CLOSE = "window-close" as const;
+
+/** Edit 菜单：自定义项 key → Rust dispatch_standard_edit_action 动作名 */
+export const STANDARD_EDIT_MENU_ACTION_BY_KEY = {
+    "edit-undo": "undo",
+    "edit-redo": "redo",
+    "edit-cut": "cut",
+    "edit-copy": "copy",
+    "edit-paste": "paste",
+    "edit-select-all": "selectAll",
+} as const;
+
+export type StandardEditMenuKey = keyof typeof STANDARD_EDIT_MENU_ACTION_BY_KEY;

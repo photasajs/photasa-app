@@ -1,0 +1,30 @@
+---
+description: >-
+  Hard ban on synchronous/blocking patterns in Photasa. User has repeated this
+  many times. Apply to ALL work: Rust, renderer boot, IPC, watch, import, scan.
+alwaysApply: true
+---
+
+# NO SYNC — 用户铁律（反复强调）
+
+**禁止**用同步/阻塞方式「修」问题。调查/准备阶段 **只读**，未明确要求不得改代码。
+
+## 禁止项
+
+1. **Rust**：热路径 `block_on`、command 内同步磁盘 I/O、同步等待 watcher/scan 完成才返回。
+2. **Renderer 启动**：在 `app.mount` / `close_splashscreen` **之前** `await` 长链路 IPC（如整段 `initializeDepartments`）挡主窗 — 主窗必须先可见，初始化后台跑。
+3. **IPC**：突变 command 回传全表、await 落盘、O(n) clone；见 RFC 0162。
+4. **Hack**：用 `Promise.race` 超时、`setTimeout` 强行 unblock 启动 — 不算修复，是掩盖阻塞根因。
+5. **`async` ≠ 非阻塞**：写了 `async` 仍可在热路径串行 await 整条链 — 同样禁止。
+
+## 允许
+
+- `prepareCourt()` 等同进程内同步就位（无 IPC、无磁盘）。
+- Ack + 本地 patch、coalesce/debounce、`spawn_blocking` 落盘。
+- 调查结论写 RFC/回复，**不动** watch/import/启动，除非用户明确说「实现」。
+
+## 反例（本次教训）
+
+- ❌ 为查 watch 改 `App.vue` / `qinqiong` / `immediate watchArray`
+- ❌ `main.ts` 里 `await initializeDepartments()` 前加超时 race
+- ✅ 只追踪链路、写报告；启动非阻塞单独 RFC 再改
