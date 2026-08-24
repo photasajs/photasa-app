@@ -23,7 +23,7 @@
         "verify:release:latest-json": "node scripts/verify-release-latest-json.mjs"
     },
     "devDependencies": {
-        "@systembug/pangu": "^0.0.12",
+        "@systembug/pangu": "^0.1.0",
         "eslint": "^8.57.0",
         "husky": "^9.1.7",
         "lint-staged": "^17.1.0",
