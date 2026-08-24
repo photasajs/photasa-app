@@ -323,9 +323,10 @@
         },
         "help": {
             "menu": "Yardım",
-            "learnMore": "Daha Fazla Bilgi",
             "about": "Photasa Hakkında",
-            "reportIssue": "Sorun bildir"
+            "reportIssue": "Sorun bildir…",
+            "explorePhotasa": "Photasa'yı keşfet",
+            "gettingStarted": "Photasa ile başlarken"
         },
         "separator": "Ayırıcı",
         "file": {

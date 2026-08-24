@@ -44,6 +44,9 @@ import {
     MENU_KEY_VIEW_RELOAD,
     MENU_KEY_WINDOW_CLOSE,
     MENU_KEY_WINDOW_MAXIMIZE,
+    MENU_KEY_WINDOW_MINIMIZE,
+    STANDARD_EDIT_MENU_ACTION_BY_KEY,
+    type StandardEditMenuKey,
 } from "../../constants/menu-keys";
 import { openReportIssueDialog } from "../report-issue-dialog";
 import {
@@ -232,7 +235,7 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
      *
      * 根据菜单项 key 分发到相应服务或处理：
      * - 有 role 的菜单项：由 contract reference 自动处理（如 reload, quit, about 等）
-     * - 有 url 的菜单项：打开外部链接（如 help.learnMore）
+     * - 有 url 的菜单项：打开外部链接（如 help.explorePhotasa）
      * - 其他菜单项：根据 key 分发到相应服务或 emit 事件
      */
     handleMenuAction(payload: MenuActionPayload): void {
@@ -298,6 +301,38 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
                     })
                     .catch((err: unknown) => {
                         logger.error("📋 长孙无忌：窗口最大化切换失败", err);
+                    });
+                return;
+            }
+
+            if (payload.key === MENU_KEY_WINDOW_MINIMIZE) {
+                void this.fangXuanLingService
+                    .processZouzhe({
+                        department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
+                        matter: ZOUZHE_MATTERS.WINDOW_MINIMIZE,
+                        content: {},
+                        timestamp: Date.now(),
+                        priority: ZOUZHE_PRIORITIES.NORMAL,
+                    })
+                    .catch((err: unknown) => {
+                        logger.error("📋 长孙无忌：窗口最小化失败", err);
+                    });
+                return;
+            }
+
+            const standardEditAction =
+                STANDARD_EDIT_MENU_ACTION_BY_KEY[payload.key as StandardEditMenuKey];
+            if (standardEditAction) {
+                void this.fangXuanLingService
+                    .processZouzhe({
+                        department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
+                        matter: ZOUZHE_MATTERS.STANDARD_EDIT_ACTION,
+                        content: { action: standardEditAction },
+                        timestamp: Date.now(),
+                        priority: ZOUZHE_PRIORITIES.NORMAL,
+                    })
+                    .catch((err: unknown) => {
+                        logger.error(`📋 长孙无忌：编辑菜单动作失败（${standardEditAction}）`, err);
                     });
                 return;
             }

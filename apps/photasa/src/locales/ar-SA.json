@@ -323,9 +323,10 @@
         },
         "help": {
             "menu": "مساعدة",
-            "learnMore": "معرفة المزيد",
             "about": "حول بيكاسا",
-            "reportIssue": "الإبلاغ عن مشكلة"
+            "reportIssue": "الإبلاغ عن مشكلة…",
+            "explorePhotasa": "استكشاف Photasa",
+            "gettingStarted": "البدء مع Photasa"
         },
         "separator": "فاصل",
         "file": {

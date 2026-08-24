@@ -292,7 +292,7 @@
         "getConfig": "Ottieni informazioni libreria foto",
         "rescan": "Riscansiona cartella",
         "app": {
-            "menu": "App",
+            "menu": "Photasa",
             "about": "Informazioni su Photasa",
             "services": "Servizi",
             "hide": "Nascondi Photasa",
@@ -320,13 +320,14 @@
         },
         "help": {
             "menu": "Aiuto",
-            "learnMore": "Scopri di più",
             "about": "Informazioni su Photasa",
-            "reportIssue": "Segnala un problema"
+            "reportIssue": "Segnala un problema…",
+            "explorePhotasa": "Esplora Photasa",
+            "gettingStarted": "Inizia con Photasa"
         },
         "separator": "Separatore",
         "file": {
-            "menu": "File",
+            "menu": "Archivio",
             "import": "Importa foto",
             "addFolder": "Aggiungi cartella libreria",
             "scanQueue": "Coda di scansione"

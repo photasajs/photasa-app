@@ -12,6 +12,7 @@
         "prepare": "husky",
         "build:photasa": "pnpm --filter @photasa/photasa run build",
         "build:debug:photasa": "pnpm --filter @photasa/photasa run build:debug",
+        "deploy:photasa": "pnpm --filter @photasa/photasa run build:local && ditto \"target/release/bundle/macos/Photasa.app\" \"/Applications/Photasa.app\" && codesign --force --deep --sign - \"/Applications/Photasa.app\" && codesign --verify --deep --strict \"/Applications/Photasa.app\"",
         "vite:dev:photasa": "pnpm --filter @photasa/photasa run vite:dev",
         "clippy": "cargo clippy --workspace --all-targets -- -D warnings",
         "test:rust": "cargo test --workspace",

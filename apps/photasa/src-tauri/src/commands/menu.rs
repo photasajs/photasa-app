@@ -13,7 +13,7 @@ use std::sync::{Mutex, OnceLock};
 #[cfg(target_os = "macos")]
 use tauri::menu::{
     Menu, MenuItem, MenuItemBuilder, MenuItemKind, PredefinedMenuItem, Submenu, SubmenuBuilder,
-    WINDOW_SUBMENU_ID,
+    HELP_SUBMENU_ID, WINDOW_SUBMENU_ID,
 };
 #[cfg(target_os = "macos")]
 use tauri::Emitter;
@@ -35,6 +35,8 @@ pub struct MenuItemData {
     pub url: Option<String>,
     #[serde(rename = "isMacOnly")]
     pub is_mac_only: Option<bool>,
+    #[serde(rename = "excludeOnMac")]
+    pub exclude_on_mac: Option<bool>,
     pub items: Option<Vec<MenuItemData>>,
     #[serde(rename = "type")]
     pub item_type: Option<String>,
@@ -131,14 +133,18 @@ fn build_and_set_menu(
 
     for group in &menus {
         let submenu = build_submenu(app, group)?;
-        if group.key == "help" {
-            let item_count = group.items.as_ref().map(|items| items.len()).unwrap_or(0);
-            log::info!("📋 构建 Help 系统子菜单：{item_count} 项");
-        }
         menu.append(&submenu).map_err(|e| e.to_string())?;
     }
 
     app.set_menu(menu.clone()).map_err(|e| e.to_string())?;
+
+    if let Some(help_data) = menus.iter().find(|group| group.key == "help") {
+        if let Some(tauri::menu::MenuItemKind::Submenu(help_submenu)) = menu.get(HELP_SUBMENU_ID) {
+            help_submenu
+                .set_text(&help_data.label)
+                .map_err(|e| e.to_string())?;
+        }
+    }
 
     let mut guard = menu_state
         .menu
@@ -265,88 +271,122 @@ fn patch_normal_menu_item(
 
 /// 前端业务 key → Tauri/muda 原生子菜单 id
 ///
-/// HELP_SUBMENU_ID 不可用：muda#263 / muda#301（tauri-apps 官方确认重复问题，未修复）
-/// 证实无论是否显式注册 set_as_help_menu_for_nsapp，用 HELP_SUBMENU_ID 构建的子菜单
-/// 自定义项都不渲染（截至本次排查，上游无可用修复）。Help 改用业务 key 作为普通子菜单 id。
-/// WINDOW_SUBMENU_ID 保留：已验证正常渲染（Minimize/Zoom/Close Window 均可见）。
+/// muda 0.17.2 修复 macOS Help/Window 菜单注册到错误 NSMenu 实例的问题。
+/// 使用 Tauri 原生 id，让 `AppHandle::set_menu` 在挂载主菜单后注册特殊子菜单。
 #[cfg(target_os = "macos")]
 fn submenu_native_id(key: &str) -> &str {
     match key {
+        "help" => HELP_SUBMENU_ID,
         "window" => WINDOW_SUBMENU_ID,
         _ => key,
     }
 }
 
+/// AppKit 在 `setMainMenu` 挂载时按标题文字（本地化 "Help"）自动接管子菜单，
+/// 抢先清空其中的自定义项，早于 `HELP_SUBMENU_ID` 的显式注册生效（RFC 0171）。
+/// 挂载期用非保留标题占位绕开文字触发；`set_menu` 完成 id 注册后，
+/// `build_and_set_menu` 再用 `Submenu::set_text` 改回本地化标题
+/// （此时 NSMenu 已绑定，改名不会重新触发清空）。
+#[cfg(target_os = "macos")]
+const HELP_MENU_MOUNT_TITLE: &str = "Photasa Help";
+
 #[cfg(target_os = "macos")]
 fn build_submenu(app: &AppHandle, data: &MenuItemData) -> Result<Submenu<tauri::Wry>, String> {
-    let mut builder = SubmenuBuilder::with_id(app, submenu_native_id(&data.key), &data.label);
+    let mount_title = if data.key == "help" {
+        HELP_MENU_MOUNT_TITLE
+    } else {
+        data.label.as_str()
+    };
+    let mut builder = SubmenuBuilder::with_id(app, submenu_native_id(&data.key), mount_title);
 
     if let Some(items) = &data.items {
         for item in items {
-            if item.is_mac_only == Some(true) {
-                #[cfg(not(target_os = "macos"))]
+            if item.exclude_on_mac == Some(true) {
+                #[cfg(target_os = "macos")]
                 continue;
             }
 
-            if item.item_type.as_deref() == Some("separator") || item.role.as_deref() == Some("separator") {
+            if item.item_type.as_deref() == Some("separator")
+                || item.role.as_deref() == Some("separator")
+            {
                 builder = builder.separator();
                 continue;
             }
 
             if let Some(role) = &item.role {
-                if let Some(predefined) = role_to_predefined(app, role) {
+                if let Some(predefined) = role_to_predefined(app, role, &item.label) {
                     builder = builder.item(&predefined);
                     continue;
                 }
             }
 
             if item.items.as_ref().map(|v| !v.is_empty()).unwrap_or(false) {
-                let sub = build_submenu(app, item)?;
-                builder = builder.item(&sub);
+                let submenu = build_submenu(app, item)?;
+                builder = builder.item(&submenu);
                 continue;
             }
 
             if item.label.trim().is_empty() {
-                return Err(format!("菜单项 {} 的 label 为空，无法构建系统菜单", item.key));
+                return Err(format!(
+                    "菜单项 {} 的 label 为空，无法构建系统菜单",
+                    item.key
+                ));
             }
 
-            let mut mb = MenuItemBuilder::with_id(&item.key, &item.label).enabled(true);
+            let mut menu_item =
+                MenuItemBuilder::with_id(&item.key, &item.label).enabled(true);
             if item.disabled == Some(true) {
-                mb = mb.enabled(false);
+                menu_item = menu_item.enabled(false);
             }
-            if let Some(acc) = &item.shortcut {
-                mb = mb.accelerator(acc);
+            if let Some(accelerator) = &item.shortcut {
+                menu_item = menu_item.accelerator(accelerator);
             }
-            let mi = mb.build(app).map_err(|e| e.to_string())?;
-            builder = builder.item(&mi);
+            let menu_item = menu_item.build(app).map_err(|e| e.to_string())?;
+            builder = builder.item(&menu_item);
         }
     }
 
     builder.build().map_err(|e| e.to_string())
 }
 
+/// 前端已翻译的 label 传给 muda 预定义项，避免仅显示 macOS 系统语言（常为英文）
+#[cfg(target_os = "macos")]
+fn optional_predefined_label(label: &str) -> Option<&str> {
+    let trimmed = label.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed)
+    }
+}
+
 /// 将 contract reference role 字符串映射到 Tauri PredefinedMenuItem
 #[cfg(target_os = "macos")]
-fn role_to_predefined(app: &AppHandle, role: &str) -> Option<PredefinedMenuItem<tauri::Wry>> {
+fn role_to_predefined(
+    app: &AppHandle,
+    role: &str,
+    label: &str,
+) -> Option<PredefinedMenuItem<tauri::Wry>> {
+    let text = optional_predefined_label(label);
     match role {
         // RFC 0169: close 不得映射到 quit；窗口关闭走自定义 menu key + close_window
-        "quit" => PredefinedMenuItem::quit(app, None).ok(),
+        "quit" => PredefinedMenuItem::quit(app, text).ok(),
         "close" => None,
-        "hide" => PredefinedMenuItem::hide(app, None).ok(),
-        "hideOthers" => PredefinedMenuItem::hide_others(app, None).ok(),
-        "unhide" | "showAll" => PredefinedMenuItem::show_all(app, None).ok(),
-        "minimize" => PredefinedMenuItem::minimize(app, None).ok(),
-        "zoom" | "maximize" => PredefinedMenuItem::maximize(app, None).ok(),
-        "cut" => PredefinedMenuItem::cut(app, None).ok(),
-        "copy" => PredefinedMenuItem::copy(app, None).ok(),
-        "paste" => PredefinedMenuItem::paste(app, None).ok(),
-        "selectAll" => PredefinedMenuItem::select_all(app, None).ok(),
-        "undo" => PredefinedMenuItem::undo(app, None).ok(),
-        "redo" => PredefinedMenuItem::redo(app, None).ok(),
+        "hide" => PredefinedMenuItem::hide(app, text).ok(),
+        "hideOthers" => PredefinedMenuItem::hide_others(app, text).ok(),
+        "unhide" | "showAll" => PredefinedMenuItem::show_all(app, text).ok(),
+        "minimize" => PredefinedMenuItem::minimize(app, text).ok(),
+        "zoom" | "maximize" => PredefinedMenuItem::maximize(app, text).ok(),
+        "cut" => PredefinedMenuItem::cut(app, text).ok(),
+        "copy" => PredefinedMenuItem::copy(app, text).ok(),
+        "paste" => PredefinedMenuItem::paste(app, text).ok(),
+        "selectAll" => PredefinedMenuItem::select_all(app, text).ok(),
+        "undo" => PredefinedMenuItem::undo(app, text).ok(),
+        "redo" => PredefinedMenuItem::redo(app, text).ok(),
         "separator" => PredefinedMenuItem::separator(app).ok(),
-        "about" => PredefinedMenuItem::about(app, None, None).ok(),
-        "services" => PredefinedMenuItem::services(app, None).ok(),
-        "togglefullscreen" | "fullscreen" => PredefinedMenuItem::fullscreen(app, None).ok(),
+        "about" => PredefinedMenuItem::about(app, text, None).ok(),
+        "services" => PredefinedMenuItem::services(app, text).ok(),
+        "togglefullscreen" | "fullscreen" => PredefinedMenuItem::fullscreen(app, text).ok(),
         _ => None,
     }
 }
@@ -366,24 +406,41 @@ mod tests {
     }
 
     #[test]
+    fn menu_item_data_deserializes_exclude_on_mac() {
+        let item: MenuItemData = serde_json::from_str(
+            r#"{"key":"window-close","label":"Close Window","excludeOnMac":true}"#,
+        )
+        .unwrap();
+        assert_eq!(item.exclude_on_mac, Some(true));
+    }
+
+    #[test]
     #[cfg(target_os = "macos")]
-    fn submenu_native_id_maps_window_to_tauri_id_but_not_help() {
-        // muda#263 / muda#301: HELP_SUBMENU_ID 子菜单自定义项不渲染，help 必须走普通 id
-        assert_eq!(submenu_native_id("help"), "help");
+    fn submenu_native_id_maps_help_and_window_to_tauri_ids() {
+        assert_eq!(submenu_native_id("help"), HELP_SUBMENU_ID);
         assert_eq!(submenu_native_id("window"), WINDOW_SUBMENU_ID);
         assert_eq!(submenu_native_id("file"), "file");
     }
 
     #[test]
-    fn help_menu_payload_includes_report_issue_item() {
+    #[cfg(target_os = "macos")]
+    fn optional_predefined_label_trims_and_rejects_empty() {
+        assert_eq!(optional_predefined_label("  剪切  "), Some("剪切"));
+        assert_eq!(optional_predefined_label(""), None);
+        assert_eq!(optional_predefined_label("   "), None);
+    }
+
+    #[test]
+    fn help_menu_payload_includes_rfc_0171_items() {
         let menus: Vec<MenuItemData> = serde_json::from_str(
             r#"[
               {
                 "key": "help",
                 "label": "Help",
                 "items": [
-                  { "key": "help-report-issue", "label": "Report Issue" },
-                  { "key": "help-learn-more", "label": "Learn More", "url": "https://photasa.me" },
+                  { "key": "help-report-issue", "label": "Report Issue…" },
+                  { "key": "help-explore-photasa", "label": "Explore Photasa", "url": "https://photasa.me" },
+                  { "key": "help-getting-started", "label": "Getting Started with Photasa", "url": "https://photasa.me/docs" },
                   { "key": "help-about", "label": "About Photasa", "shortcut": "F1" }
                 ]
               }
@@ -401,6 +458,8 @@ mod tests {
             .collect();
 
         assert!(keys.contains(&"help-report-issue"));
-        assert_eq!(keys.len(), 3);
+        assert!(keys.contains(&"help-explore-photasa"));
+        assert!(keys.contains(&"help-getting-started"));
+        assert!(keys.contains(&"help-about"));
     }
 }

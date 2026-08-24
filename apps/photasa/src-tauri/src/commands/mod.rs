@@ -23,6 +23,7 @@ pub mod platform;
 pub mod scan_queue;
 pub mod scan_runner;
 pub mod shell;
+pub mod standard_edit;
 pub mod folder_tree;
 pub mod preferences;
 pub mod splash_bridge;

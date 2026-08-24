@@ -323,9 +323,10 @@
         },
         "help": {
             "menu": "Trợ giúp",
-            "learnMore": "Tìm hiểu thêm",
             "about": "Giới thiệu về Photasa",
-            "reportIssue": "Báo cáo sự cố"
+            "reportIssue": "Báo cáo sự cố…",
+            "explorePhotasa": "Khám phá Photasa",
+            "gettingStarted": "Bắt đầu với Photasa"
         },
         "separator": "Phân cách",
         "file": {

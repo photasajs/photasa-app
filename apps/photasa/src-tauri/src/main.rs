@@ -17,7 +17,7 @@ use commands::{
     config, directory, engine_status, extract_metadata, import_execute, import_legacy,
     import_preview, import_scan_directories, import_session_store, log_viewer, menu, path,
     platform, preferences, scan_queue, shell, folder_tree, splash_bridge, stubs, thumbnail, update,
-    watch, window,
+    standard_edit, watch, window,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -205,6 +205,7 @@ fn main() {
             window::is_maximized,
             window::reload_window,
             window::close_splashscreen,
+            standard_edit::dispatch_standard_edit_action,
             // Shell 命令
             shell::show_in_folder,
             shell::open_external,

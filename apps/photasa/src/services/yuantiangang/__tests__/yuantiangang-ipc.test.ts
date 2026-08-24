@@ -483,6 +483,40 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         expect(result.acknowledged).toBe(true);
     });
 
+    it("WINDOW_MINIMIZE invokes minimize_window（RFC 0169）", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.WINDOW_MINIMIZE,
+            context: {},
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("minimize_window");
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("STANDARD_EDIT_ACTION invokes dispatch_standard_edit_action", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.STANDARD_EDIT_ACTION,
+            context: { action: "cut" },
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("dispatch_standard_edit_action", {
+            action: "cut",
+        });
+        expect(result.acknowledged).toBe(true);
+    });
+
     it("OPEN_EXTERNAL invoke open_external（RFC 0149/0150）", async () => {
         mockInvoke.mockResolvedValue(undefined);
 

@@ -239,11 +239,11 @@ export type FileType = "image" | "video" | "ai" | "all";
 
 3. **高级功能**：图层预览、元数据编辑等高级功能
 4. **性能优化**：多线程处理等性能优化
-5. **Photasa 实现**：以 [RFC 0004（Rust 本地预览）](../0004-local-design-file-preview-rust.md) 为准，非本 RFC Electron 路径
+5. **Rust 通用能力**：以 [RFC 0004（`design-thumbnail` crate）](./0004-local-design-file-preview-rust.md) 为准；Photasa 接入需后续独立 RFC
 
 ## 相关文档
 
-- [RFC 0004: 设计文件本地预览（Rust）](../0004-local-design-file-preview-rust.md)（废止原在线服务草案）
+- [RFC 0004: `design-thumbnail` PSD / AI 本地缩略图 crate](./0004-local-design-file-preview-rust.md)（已完成；Photasa 尚未接入）
 - [RFC 0001: 导入向导系统](./0001-import-wizard-system.md)
 - [RFC 0002: 无头UI组件](./0002-headless-ui-components.md)
 - [RFC 0003: 统一监控到扫描队列](./0003-unify-watch-to-scan-queue.md)
