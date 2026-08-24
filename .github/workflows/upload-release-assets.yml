@@ -82,13 +82,26 @@ jobs:
                   echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
                   echo "release_sha=$release_sha" >> "$GITHUB_OUTPUT"
 
-            - name: Verify signing key secret presence
+            - name: Verify release signing secrets
               shell: bash
+              env:
+                  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+                  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+                  APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+                  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+                  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+                  APPLE_ID: ${{ secrets.APPLE_ID }}
+                  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
               run: |
-                  if [ -z "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" ]; then
-                    echo "::error::TAURI_SIGNING_PRIVATE_KEY is missing in repository secrets. Fail-fast to prevent unsigned releases."
-                    exit 1
-                  fi
+                  set -euo pipefail
+                  required=(TAURI_SIGNING_PRIVATE_KEY APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD KEYCHAIN_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID)
+                  for name in "${required[@]}"; do
+                    if [ -z "${!name}" ]; then
+                      echo "::error::$name is missing in repository secrets. Refusing to publish an unsigned or unnotarized release."
+                      exit 1
+                    fi
+                  done
 
             - name: Resolve matrix OS list
               id: platforms
@@ -126,12 +139,42 @@ jobs:
               if: runner.os == 'Windows'
               uses: ./.github/actions/setup-photasa-windows-msvc
 
+            - name: Import Apple Developer ID certificate
+              if: runner.os == 'macOS'
+              shell: bash
+              env:
+                  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+                  APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+                  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+                  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+              run: |
+                  set -euo pipefail
+                  certificate_path="$RUNNER_TEMP/developer-id-application.p12"
+                  keychain_path="$RUNNER_TEMP/photasa-build.keychain-db"
+                  printf '%s' "$APPLE_CERTIFICATE" | base64 -D > "$certificate_path"
+                  security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
+                  security set-keychain-settings -lut 3600 "$keychain_path"
+                  security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
+                  security import "$certificate_path" -k "$keychain_path" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+                  security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$keychain_path"
+                  security list-keychains -d user -s "$keychain_path" login.keychain-db
+                  security default-keychain -d user -s "$keychain_path"
+                  security find-identity -v -p codesigning "$keychain_path"
+                  if ! security find-identity -v -p codesigning "$keychain_path" | grep -Fq "$APPLE_SIGNING_IDENTITY"; then
+                    echo "::error::Imported certificate does not provide APPLE_SIGNING_IDENTITY."
+                    exit 1
+                  fi
+
             - name: Build & Publish Tauri Release Assets
               uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+                  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+                  APPLE_ID: ${{ secrets.APPLE_ID }}
+                  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
               with:
                   projectPath: apps/photasa
                   tagName: ${{ needs.resolve.outputs.tag_name }}
