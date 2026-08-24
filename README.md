@@ -71,6 +71,7 @@ Workflow: [`.github/workflows/photasa-build.yml`](./.github/workflows/photasa-bu
 
 - [Development Guide](docs/DEV_GUIDE.md) — setup (partially legacy; prefer this README + `apps/photasa`)
 - [Debug Guide](docs/DEBUG.md) · [MCP Debug](docs/DEBUG_MCP.md)
+- [macOS signing and notarization](docs/signing/macos-signing-and-notarization.md) — GitHub Actions Developer ID release setup
 - [ROADMAP.md](./ROADMAP.md) — what’s done / next
 - RFCs: `.spec/rfc/` (Photasa) · `docs/rfc/` (historical)
 

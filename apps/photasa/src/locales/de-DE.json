@@ -340,7 +340,7 @@
         "getConfig": "Fotobibliothek-Info abrufen",
         "rescan": "Verzeichnis erneut scannen",
         "app": {
-            "menu": "App",
+            "menu": "Photasa",
             "about": "Über Photasa",
             "services": "Dienste",
             "hide": "Photasa ausblenden",
@@ -368,9 +368,10 @@
         },
         "help": {
             "menu": "Hilfe",
-            "learnMore": "Mehr erfahren",
             "about": "Über Photasa",
-            "reportIssue": "Problem melden"
+            "reportIssue": "Problem melden…",
+            "explorePhotasa": "Photasa entdecken",
+            "gettingStarted": "Erste Schritte mit Photasa"
         },
         "separator": "Trenner",
         "file": {

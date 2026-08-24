@@ -5,12 +5,16 @@ import {
     MENU_KEY_FILE_IMPORT,
     MENU_KEY_FILE_SCAN_QUEUE,
     MENU_KEY_HELP_ABOUT,
+    MENU_KEY_HELP_EXPLORE,
+    MENU_KEY_HELP_GETTING_STARTED,
     MENU_KEY_HELP_REPORT_ISSUE,
     MENU_KEY_VIEW_FORCE_RELOAD,
     MENU_KEY_VIEW_RELOAD,
     MENU_KEY_WINDOW_CLOSE,
     MENU_KEY_WINDOW_MAXIMIZE,
+    MENU_KEY_WINDOW_MINIMIZE,
 } from "../../constants/menu-keys";
+import { PHOTASA_ME_DOCS_URL, PHOTASA_ME_HOMEPAGE_URL } from "../../constants/photasa-me-api";
 
 export const SystemMenus: readonly MenuItemData[] = Object.freeze([
     // macOS 专属 appMenu（RFC 0169: 增加 Preferences）
@@ -88,11 +92,11 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
         key: "edit",
         label: "menu.edit.menu",
         items: [
-            { key: "edit-undo", label: "menu.edit.undo", role: "undo", shortcut: "CmdOrCtrl+Z" },
+            // 不用 PredefinedMenuItem：macOS 会强制英文；走自定义项 + dispatch_standard_edit_action
+            { key: "edit-undo", label: "menu.edit.undo", shortcut: "CmdOrCtrl+Z" },
             {
                 key: "edit-redo",
                 label: "menu.edit.redo",
-                role: "redo",
                 shortcut: "CmdOrCtrl+Shift+Z",
             },
             {
@@ -101,9 +105,9 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
                 role: "separator",
                 type: "separator",
             },
-            { key: "edit-cut", label: "menu.edit.cut", role: "cut", shortcut: "CmdOrCtrl+X" },
-            { key: "edit-copy", label: "menu.edit.copy", role: "copy", shortcut: "CmdOrCtrl+C" },
-            { key: "edit-paste", label: "menu.edit.paste", role: "paste", shortcut: "CmdOrCtrl+V" },
+            { key: "edit-cut", label: "menu.edit.cut", shortcut: "CmdOrCtrl+X" },
+            { key: "edit-copy", label: "menu.edit.copy", shortcut: "CmdOrCtrl+C" },
+            { key: "edit-paste", label: "menu.edit.paste", shortcut: "CmdOrCtrl+V" },
             {
                 key: "edit-separator-2",
                 label: "menu.separator",
@@ -113,7 +117,6 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
             {
                 key: "edit-select-all",
                 label: "menu.edit.selectAll",
-                role: "selectAll",
                 shortcut: "CmdOrCtrl+A",
             },
         ],
@@ -168,9 +171,8 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
         label: "menu.window.menu",
         items: [
             {
-                key: "window-minimize",
+                key: MENU_KEY_WINDOW_MINIMIZE,
                 label: "menu.window.minimize",
-                role: "minimize",
                 shortcut: "Ctrl+M",
             },
             {
@@ -182,10 +184,12 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
                 key: MENU_KEY_WINDOW_CLOSE,
                 label: "menu.window.close",
                 shortcut: "Ctrl+W",
+                // macOS AppKit 会在 File 菜单注入 Close Window；Window 内保留会重复
+                excludeOnMac: true,
             },
         ],
     },
-    // Help 菜单（Report Issue 置顶，避免 macOS Help 自动合并时中间项丢失）
+    // Help 菜单（RFC 0171：Report Issue → Explore → Getting Started → About）
     {
         key: "help",
         label: "menu.help.menu",
@@ -201,9 +205,20 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
                 type: "separator",
             },
             {
-                key: "help-learn-more",
-                label: "menu.help.learnMore",
-                url: "https://photasa.me",
+                key: MENU_KEY_HELP_EXPLORE,
+                label: "menu.help.explorePhotasa",
+                url: PHOTASA_ME_HOMEPAGE_URL,
+            },
+            {
+                key: MENU_KEY_HELP_GETTING_STARTED,
+                label: "menu.help.gettingStarted",
+                url: PHOTASA_ME_DOCS_URL,
+            },
+            {
+                key: "help-separator-2",
+                label: "menu.separator",
+                role: "separator",
+                type: "separator",
             },
             { key: MENU_KEY_HELP_ABOUT, label: "menu.help.about", shortcut: "F1" },
         ],

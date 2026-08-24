@@ -37,6 +37,10 @@ export const WINDOW_COMMANDS = {
     IS_MAXIMIZED: "is_maximized",
 } as const;
 
+export const STANDARD_EDIT_COMMANDS = {
+    DISPATCH: "dispatch_standard_edit_action",
+} as const;
+
 /** RFC 0137：文件监视合并批次事件（Rust photasa-watch → 前端） */
 export const WATCH_EVENTS = {
     SCAN_QUEUE_ADD: "picasa:add-to-scan-queue",

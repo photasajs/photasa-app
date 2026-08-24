@@ -63,7 +63,7 @@ export function assertTitlebarMenuBarPointerContract(source: string): string[] {
     return errors;
 }
 
-/** macOS 系统菜单契约（RFC 0170：Help 上游 bug，禁止已知无效方案） */
+/** macOS 系统菜单契约（muda 0.17.2：使用 Tauri 原生 Help/Window 注册路径） */
 export function assertMacSystemMenuContract(mainRs: string, menuRs: string): string[] {
     const errors: string[] = [];
     if (mainRs.includes("enable_macos_default_menu(false)")) {
@@ -71,26 +71,36 @@ export function assertMacSystemMenuContract(mainRs: string, menuRs: string): str
             "main.rs 禁止 enable_macos_default_menu(false)（异步 apply_system_menu 会导致启动期无菜单栏）",
         );
     }
-    if (/"help"\s*=>\s*HELP_SUBMENU_ID/.test(menuRs)) {
-        errors.push("menu.rs help 不得映射 HELP_SUBMENU_ID（muda#263 / muda#301）");
+    if (!/"help"\s*=>\s*HELP_SUBMENU_ID/.test(menuRs)) {
+        errors.push("menu.rs 必须映射 help → HELP_SUBMENU_ID（muda 0.17.2 修复原生注册）");
     }
     if (!menuRs.includes("WINDOW_SUBMENU_ID")) {
         errors.push("menu.rs 必须保留 window → WINDOW_SUBMENU_ID");
     }
-    if (menuRs.includes("set_as_help_menu_for_nsapp()") && menuRs.includes("configure_macos")) {
-        errors.push("menu.rs 禁止 configure_macos + set_as_help_menu_for_nsapp（曾导致空下拉）");
-    }
     return errors;
 }
 
-export function assertHelpMenuHasReportIssue(menuDataSource: string): string[] {
+export function assertHelpMenuContract(menuDataSource: string): string[] {
+    const errors: string[] = [];
     if (
         !menuDataSource.includes("help-report-issue") &&
         !menuDataSource.includes("MENU_KEY_HELP_REPORT_ISSUE")
     ) {
-        return ["menu-data.ts Help 菜单必须包含 help-report-issue"];
+        errors.push("menu-data.ts Help 菜单必须包含 help-report-issue");
     }
-    return [];
+    if (
+        !menuDataSource.includes("help-explore-photasa") &&
+        !menuDataSource.includes("MENU_KEY_HELP_EXPLORE")
+    ) {
+        errors.push("menu-data.ts Help 菜单必须包含 help-explore-photasa（RFC 0171）");
+    }
+    if (
+        !menuDataSource.includes("help-getting-started") &&
+        !menuDataSource.includes("MENU_KEY_HELP_GETTING_STARTED")
+    ) {
+        errors.push("menu-data.ts Help 菜单必须包含 help-getting-started（RFC 0171）");
+    }
+    return errors;
 }
 
 export function collectTitlebarGuardViolations(files: {
@@ -105,6 +115,6 @@ export function collectTitlebarGuardViolations(files: {
         ...assertTitlebarMacDragContract(files.titlebarMac),
         ...assertTitlebarMenuBarPointerContract(files.titlebarMenuBar),
         ...assertMacSystemMenuContract(files.mainRs, files.menuRs),
-        ...assertHelpMenuHasReportIssue(files.menuData),
+        ...assertHelpMenuContract(files.menuData),
     ];
 }

@@ -323,9 +323,10 @@
         },
         "help": {
             "menu": "도움말",
-            "learnMore": "자세히 알아보기",
             "about": "Photasa 정보",
-            "reportIssue": "문제 보고"
+            "reportIssue": "문제 보고…",
+            "explorePhotasa": "Photasa 둘러보기",
+            "gettingStarted": "Photasa 시작하기"
         },
         "separator": "구분자",
         "file": {

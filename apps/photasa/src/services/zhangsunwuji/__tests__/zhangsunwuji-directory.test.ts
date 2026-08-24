@@ -7,10 +7,14 @@ import {
     MENU_KEY_APP_PREFERENCES,
     MENU_KEY_FILE_IMPORT,
     MENU_KEY_HELP_ABOUT,
+    MENU_KEY_HELP_EXPLORE,
+    MENU_KEY_HELP_GETTING_STARTED,
     MENU_KEY_HELP_REPORT_ISSUE,
     MENU_KEY_VIEW_RELOAD,
     MENU_KEY_WINDOW_CLOSE,
 } from "@renderer/constants/menu-keys";
+import { PHOTASA_ME_DOCS_URL, PHOTASA_ME_HOMEPAGE_URL } from "@renderer/constants/photasa-me-api";
+import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import { openReportIssueDialog } from "../../report-issue-dialog";
 import {
     openAboutFromMenu,
@@ -32,9 +36,17 @@ vi.mock("../../menu-app-handlers", () => ({
 
 describe("ZhangSunWuJiService directory selection (RFC 0154 Phase 2f)", () => {
     const processZouzhe = vi.fn();
+    const qizouEmit = vi.fn();
     const fangXuanLing = {
         processZouzhe,
+        menus: { menus: [] },
     } as unknown as IFangXuanLingService;
+
+    function createService(): ZhangSunWuJiService {
+        const service = new ZhangSunWuJiService(fangXuanLing);
+        service.setQizouBus({ emit: qizouEmit } as never);
+        return service;
+    }
 
     beforeEach(() => vi.clearAllMocks());
 
@@ -150,11 +162,44 @@ describe("ZhangSunWuJiService directory selection (RFC 0154 Phase 2f)", () => {
     });
 
     it("opens about tab for help-about menu key (F1)", () => {
-        const service = new ZhangSunWuJiService(fangXuanLing);
+        const service = createService();
 
         service.handleMenuAction({ key: MENU_KEY_HELP_ABOUT, label: "About" });
 
         expect(openAboutFromMenu).toHaveBeenCalledTimes(1);
         expect(processZouzhe).not.toHaveBeenCalled();
+    });
+
+    it("opens external links for RFC 0171 help explore and getting started keys", () => {
+        const service = createService();
+
+        service.handleMenuAction({
+            key: MENU_KEY_HELP_EXPLORE,
+            label: "Explore Photasa",
+            url: PHOTASA_ME_HOMEPAGE_URL,
+        });
+        service.handleMenuAction({
+            key: MENU_KEY_HELP_GETTING_STARTED,
+            label: "Getting Started with Photasa",
+            url: PHOTASA_ME_DOCS_URL,
+        });
+
+        expect(qizouEmit).toHaveBeenCalledTimes(2);
+        expect(qizouEmit).toHaveBeenNthCalledWith(
+            1,
+            "qizou",
+            expect.objectContaining({
+                matter: QizouMatters.OPEN_EXTERNAL,
+                content: { url: PHOTASA_ME_HOMEPAGE_URL },
+            }),
+        );
+        expect(qizouEmit).toHaveBeenNthCalledWith(
+            2,
+            "qizou",
+            expect.objectContaining({
+                matter: QizouMatters.OPEN_EXTERNAL,
+                content: { url: PHOTASA_ME_DOCS_URL },
+            }),
+        );
     });
 });

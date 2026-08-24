@@ -68,7 +68,7 @@ const logger = loggers.lishimin;
 const imports = useImportOperations();
 const themeManager = useChuSuiLiang().themeManager;
 const chuSuiLiang = useChuSuiLiang();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const preferenceStore = usePreferenceStore();
 const { paths, currentFolder } = storeToRefs(preferenceStore);
 
@@ -247,6 +247,11 @@ async function detectRecoverableImports(): Promise<void> {
 const weiZheng = useWeiZheng();
 let teardownGlobalErrorHandlers: (() => void) | undefined;
 
+// 偏好/玄奘切换语言后同步系统菜单（PredefinedMenuItem 依赖全量 rebuild）
+watch(locale, () => {
+    zhangSunWuJi.refreshMenus(t);
+});
+
 onMounted(async () => {
     registerReportIssueDialogOpener(handleOpenReportIssue);
     registerMenuAppHandlers({
@@ -259,6 +264,9 @@ onMounted(async () => {
         },
     });
     teardownGlobalErrorHandlers = installGlobalErrorHandlers();
+
+    // 系统菜单必须先初始化，不能被主题、遥测或扫描等异步启动任务阻塞。
+    zhangSunWuJi.refreshMenus(t);
 
     const reconciledTelemetry = reconcileTelemetryConsent(preferenceStore.telemetry);
     if (reconciledTelemetry.consentStatus !== preferenceStore.telemetry.consentStatus) {
@@ -284,9 +292,6 @@ onMounted(async () => {
             logger.error("👑 应用主题失败:", error);
         }
     }
-
-    // 应用启动时全局初始化菜单栏数据（国际化）
-    zhangSunWuJi.refreshMenus(t);
 
     // 监听Store中主题变化，自动应用主题
     watch(

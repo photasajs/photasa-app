@@ -36,6 +36,7 @@ import {
     PREFERENCES_COMMANDS,
     SCAN_QUEUE_COMMANDS,
     SHELL_COMMANDS,
+    STANDARD_EDIT_COMMANDS,
     WATCH_COMMANDS,
     WATCH_EVENTS,
     WINDOW_COMMANDS,
@@ -1035,7 +1036,9 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             zhaoling.command === ZOUZHE_MATTERS.OPEN_EXTERNAL ||
             zhaoling.command === ZOUZHE_MATTERS.OPEN_IN_FINDER ||
             zhaoling.command === ZOUZHE_MATTERS.WINDOW_MAXIMIZE_TOGGLE ||
-            zhaoling.command === ZOUZHE_MATTERS.WINDOW_CLOSE
+            zhaoling.command === ZOUZHE_MATTERS.WINDOW_MINIMIZE ||
+            zhaoling.command === ZOUZHE_MATTERS.WINDOW_CLOSE ||
+            zhaoling.command === ZOUZHE_MATTERS.STANDARD_EDIT_ACTION
         ) {
             try {
                 if (!isTauri()) {
@@ -1068,6 +1071,12 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     } else {
                         await invoke(WINDOW_COMMANDS.MAXIMIZE);
                     }
+                } else if (zhaoling.command === ZOUZHE_MATTERS.WINDOW_MINIMIZE) {
+                    await invoke(WINDOW_COMMANDS.MINIMIZE);
+                } else if (zhaoling.command === ZOUZHE_MATTERS.STANDARD_EDIT_ACTION) {
+                    await invoke(STANDARD_EDIT_COMMANDS.DISPATCH, {
+                        action: String(context.action ?? ""),
+                    });
                 } else {
                     await invoke(WINDOW_COMMANDS.CLOSE);
                 }

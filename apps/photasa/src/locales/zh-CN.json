@@ -425,9 +425,10 @@
         },
         "help": {
             "menu": "帮助",
-            "learnMore": "了解更多",
             "about": "关于仓廪图司",
-            "reportIssue": "报告问题"
+            "reportIssue": "报告问题…",
+            "explorePhotasa": "探索 Photasa",
+            "gettingStarted": "Photasa 入门指南"
         },
         "separator": "分隔符",
         "file": {
