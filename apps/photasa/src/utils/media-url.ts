@@ -16,9 +16,11 @@ export function toAbsoluteMediaPath(currentFolder: string, file: string): string
     const normalizedFolder = currentFolder.replace(/\\/g, "/");
     const normalizedFile = file.replace(/\\/g, "/");
 
-    const cleanFolder = normalizedFolder.startsWith("/")
-        ? normalizedFolder
-        : `/${normalizedFolder}`;
+    const isWindowsAbsolute = /^[A-Za-z]:\//.test(normalizedFolder);
+    const cleanFolder =
+        normalizedFolder.startsWith("/") || isWindowsAbsolute
+            ? normalizedFolder
+            : `/${normalizedFolder}`;
     const trimmedFolder = cleanFolder.endsWith("/") ? cleanFolder.slice(0, -1) : cleanFolder;
     const cleanFile = normalizedFile.startsWith("/") ? normalizedFile.slice(1) : normalizedFile;
 
@@ -61,6 +63,12 @@ export function isAssetWebviewUrl(url: string): boolean {
         trimmed.startsWith(ASSET_SCHEME_PREFIX) ||
         ASSET_HTTP_HOSTS.some((host) => trimmed.startsWith(host))
     );
+}
+
+/** Vite-generated frontend asset URL (for example `/src/...` in dev or `/assets/...` in prod). */
+export function isFrontendAssetUrl(url: string): boolean {
+    const trimmed = url.trim();
+    return trimmed.startsWith("/src/") || trimmed.startsWith("/assets/");
 }
 
 /** 从 Tauri asset URL 解码出磁盘绝对路径（与 convertFileSrc 编码方式对称） */
@@ -124,14 +132,18 @@ export function ensureWebviewMediaUrl(urlOrPath: string): string {
     }
 
     if (isTauriRuntime()) {
-        if (isAssetWebviewUrl(trimmed)) {
+        if (isAssetWebviewUrl(trimmed) || isFrontendAssetUrl(trimmed)) {
             return trimmed;
         }
         const absolute = webviewMediaUrlToAbsolutePath(trimmed);
         return convertFileSrc(absolute);
     }
 
-    if (trimmed.startsWith("file://") || isAssetWebviewUrl(trimmed)) {
+    if (
+        trimmed.startsWith("file://") ||
+        isAssetWebviewUrl(trimmed) ||
+        isFrontendAssetUrl(trimmed)
+    ) {
         return trimmed;
     }
 

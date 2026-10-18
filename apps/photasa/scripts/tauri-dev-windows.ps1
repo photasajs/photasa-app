@@ -82,7 +82,7 @@ function Ensure-MsysBuildTools {
         }
     }
     if (Test-Path $msysBash) {
-        & $msysBash -lc "pacman -Sy --noconfirm make gawk diffutils" | Out-Host
+        & $msysBash -lc "pacman -Sy --noconfirm make gawk diffutils mingw-w64-ucrt-x86_64-pkgconf" | Out-Host
         return
     }
     Ensure-Make | Out-Null
@@ -143,6 +143,12 @@ if ($nasmDir) { $extraPath += $nasmDir }
 $envLines = @()
 if ($pathLine = $(if ($extraPath.Count -gt 0) { $joined = ($extraPath -join ";"); "set `"PATH=$joined;%PATH%`"`r`n" } else { "" })) { $envLines += $pathLine }
 if ($libClangDir) { $envLines += "set `"LIBCLANG_PATH=$libClangDir`"`r`n" }
+$pkgConfig = @(
+    "C:\msys64\ucrt64\bin\pkg-config.exe",
+    "C:\msys64\mingw64\bin\pkg-config.exe",
+    "C:\msys64\usr\bin\pkg-config.exe"
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($pkgConfig) { $envLines += "set `"PKG_CONFIG=$pkgConfig`"`r`n" }
 $envBlock = $envLines -join ""
 $batchFile = Join-Path $env:TEMP "photasa-tauri-dev.cmd"
 $batchContent = @"

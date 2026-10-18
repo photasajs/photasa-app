@@ -5,9 +5,9 @@ on:
         branches: [main, develop]
     workflow_dispatch:
 
-# Flip to "true" to re-enable Windows matrix legs (FFmpeg/libheif native stack).
+# Windows native dependencies are now provisioned by setup-photasa-windows-msvc.
 env:
-    PHOTASA_CI_WINDOWS_ENABLED: "false"
+    PHOTASA_CI_WINDOWS_ENABLED: "true"
 
 jobs:
     check:
@@ -92,6 +92,17 @@ jobs:
                   set -euo pipefail
                   if [ "${{ runner.os }}" = "Linux" ]; then
                     pnpm --filter @photasa/photasa run build:ci:linux
+                  elif [ "${{ runner.os }}" = "Windows" ]; then
+                    pnpm --filter @photasa/photasa run build:ci:windows
                   else
                     pnpm --filter @photasa/photasa run build:ci
                   fi
+
+            - name: Upload Windows installer artifact
+              if: runner.os == 'Windows'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: Photasa-windows-installer-${{ github.sha }}
+                  path: apps/photasa/src-tauri/target/debug/bundle/nsis/*.exe
+                  if-no-files-found: error
+                  retention-days: 14

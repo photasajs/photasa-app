@@ -22,7 +22,6 @@ fn main() {
         run_bindgen(&include_paths);
         #[cfg(not(feature = "use-bindgen"))]
         let _ = include_paths;
-        return;
     }
 
     #[cfg(all(
@@ -99,6 +98,7 @@ fn apply_libde265_embed_patch(contents: &mut String, libde265_source_dir: &str) 
          set(LIBDE265_INCLUDE_DIRS \"${{LIBDE265_SOURCE_DIR}}\" \"${{LIBDE265_BINARY_DIR}}\")\n    \
          set(LIBDE265_LIBRARY de265)\n    \
          set(LIBDE265_LIBRARIES de265)\n    \
+         add_compile_definitions(LIBDE265_STATIC_BUILD)\n    \
          set(HAVE_LIBDE265 TRUE)\n\
          endif()"
     );
@@ -241,11 +241,43 @@ fn compile_libheif() -> String {
 
     let libheif_build = build_config.build();
     install_embedded_libde265_pkg_config(&libheif_build, &out_path);
+    patch_libheif_pkg_config_for_target(&libheif_build);
 
     libheif_build
         .join("lib/pkgconfig")
         .to_string_lossy()
         .to_string()
+}
+
+/// libheif's generated pkg-config metadata assumes a GNU C++ runtime even when
+/// CMake built the archive with MSVC. Passing `-lstdc++` through system-deps on
+/// that target becomes `stdc++.lib`, which does not exist; MSVC records its own
+/// runtime requirements in the generated object files instead.
+fn patch_libheif_pkg_config_for_target(libheif_build: &Path) {
+    #[cfg(all(target_os = "windows", target_env = "msvc"))]
+    {
+        let pc_path = libheif_build.join("lib/pkgconfig/libheif.pc");
+        let contents = std::fs::read_to_string(&pc_path)
+            .unwrap_or_else(|err| panic!("failed to read {}: {err}", pc_path.display()));
+        let patched = remove_gnu_cpp_runtime(&contents);
+        std::fs::write(&pc_path, patched)
+            .unwrap_or_else(|err| panic!("failed to write {}: {err}", pc_path.display()));
+    }
+}
+
+fn remove_gnu_cpp_runtime(contents: &str) -> String {
+    contents
+        .lines()
+        .map(|line| {
+            if line.starts_with("Libs.private:") {
+                line.replace("-lstdc++", "").trim_end().to_string()
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n"
 }
 
 /// 内嵌 libde265 不会随 cmake install 落到 lib/ 与 pkgconfig/，但 libheif.pc 的
@@ -273,8 +305,9 @@ fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
 
     // vendored 头文件在 OUT_DIR/libde265（见 prepare_libheif_src）
     let de265_include_dir = out_path.join("libde265");
-    let prefix = libheif_build.to_string_lossy();
-    let include_dir = de265_include_dir.to_string_lossy();
+    let prefix = libheif_build.to_string_lossy().replace('\\', "/");
+    let include_dir = de265_include_dir.to_string_lossy().replace('\\', "/");
+    let link_name = embedded_libde265_pkg_config_link_name();
     let libde265_pc = format!(
         "prefix={prefix}\n\
          exec_prefix=${{prefix}}\n\
@@ -286,11 +319,20 @@ fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
          URL: https://github.com/strukturag/libde265\n\
          Version: 1.0.15\n\
          Requires:\n\
-         Libs: -L${{libdir}} -lde265\n\
+         Libs: -L${{libdir}} -l{link_name}\n\
          Libs.private:\n\
          Cflags: -I${{includedir}}\n"
     );
     std::fs::write(pkg_dir.join("libde265.pc"), libde265_pc).expect("failed to write libde265.pc");
+}
+
+fn embedded_libde265_pkg_config_link_name() -> &'static str {
+    if cfg!(all(target_os = "windows", target_env = "msvc")) {
+        // pkg-config converts -llibde265 to libde265.lib for the MSVC linker.
+        "libde265"
+    } else {
+        "de265"
+    }
 }
 
 fn embedded_libde265_install_lib_name() -> String {
@@ -454,6 +496,22 @@ fn is_static_archive_file_name(path: &Path) -> bool {
 }
 
 fn find_libheif() -> Vec<String> {
+    #[cfg(all(target_os = "windows", target_env = "msvc"))]
+    {
+        if std::env::var_os("PKG_CONFIG").is_none() {
+            for candidate in [
+                r"C:\msys64\ucrt64\bin\pkg-config.exe",
+                r"C:\msys64\mingw64\bin\pkg-config.exe",
+                r"C:\msys64\usr\bin\pkg-config.exe",
+            ] {
+                if std::path::Path::new(candidate).exists() {
+                    std::env::set_var("PKG_CONFIG", candidate);
+                    break;
+                }
+            }
+        }
+    }
+
     #[allow(unused_mut)]
     let mut config = system_deps::Config::new();
 
@@ -494,6 +552,7 @@ fn find_libheif() -> Vec<String> {
     }
 }
 
+#[allow(dead_code)]
 #[cfg(all(target_os = "windows", target_env = "msvc"))]
 fn install_libheif_by_vcpkg() {
     let vcpkg_lib = vcpkg::Config::new()
@@ -650,12 +709,22 @@ mod tests {
     }
 
     #[test]
+    fn removes_gnu_cpp_runtime_from_private_libs() {
+        let input = "Libs: -L${libdir} -lheif\nLibs.private: -lstdc++\n";
+        assert_eq!(
+            remove_gnu_cpp_runtime(input),
+            "Libs: -L${libdir} -lheif\nLibs.private:\n"
+        );
+    }
+
+    #[test]
     fn apply_libde265_embed_patch_replaces_lf_and_crlf_anchors() {
         let body = format!("prefix\n{LIBDE265_FIND_ANCHOR}\nsuffix");
         for input in [body.clone(), body.replace('\n', "\r\n")] {
             let mut contents = normalize_cmake_text(&input);
             apply_libde265_embed_patch(&mut contents, "D:/out/libde265");
             assert!(contents.contains("add_subdirectory(\"${LIBDE265_SOURCE_DIR}\""));
+            assert!(contents.contains("add_compile_definitions(LIBDE265_STATIC_BUILD)"));
             assert!(!contents.contains("find_package(LIBDE265)"));
         }
     }
@@ -666,6 +735,15 @@ mod tests {
             assert_eq!(embedded_libde265_install_lib_name(), "libde265.lib");
         } else {
             assert_eq!(embedded_libde265_install_lib_name(), "libde265.a");
+        }
+    }
+
+    #[test]
+    fn embedded_libde265_pkg_config_name_matches_archive() {
+        if cfg!(all(target_os = "windows", target_env = "msvc")) {
+            assert_eq!(embedded_libde265_pkg_config_link_name(), "libde265");
+        } else {
+            assert_eq!(embedded_libde265_pkg_config_link_name(), "de265");
         }
     }
 

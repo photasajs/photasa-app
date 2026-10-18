@@ -112,6 +112,19 @@ fn main() {
             log_toggle_shortcut::register_log_toggle_shortcut(app.handle());
 
             let app_handle = app.handle().clone();
+
+            // 非 macOS 平台（Windows / Linux）：主窗使用前端自定义标题栏 TitlebarWinLinux，禁用系统原生标题栏与边框装饰
+            #[cfg(not(target_os = "macos"))]
+            if let Some(main_window) = app.get_webview_window(MAIN_WEBVIEW_LABEL) {
+                if let Err(e) = main_window.set_decorations(false) {
+                    log::warn!("⚠️ 禁用主窗口系统装饰失败: {e}");
+                }
+                #[cfg(target_os = "windows")]
+                if let Err(e) = main_window.set_shadow(true) {
+                    log::warn!("⚠️ 启用主窗口阴影失败: {e}");
+                }
+            }
+
             engine_status::emit_engine_status(&app_handle, "initializing");
 
             // RFC 0101：尽早向 Splash 报告启动进度（主题在偏好加载后同步）
