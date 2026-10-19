@@ -241,6 +241,7 @@ fn compile_libheif() -> String {
 
     let libheif_build = build_config.build();
     install_embedded_libde265_pkg_config(&libheif_build, &out_path);
+    #[cfg(all(target_os = "windows", target_env = "msvc"))]
     patch_libheif_pkg_config_for_target(&libheif_build);
 
     libheif_build
@@ -253,18 +254,17 @@ fn compile_libheif() -> String {
 /// CMake built the archive with MSVC. Passing `-lstdc++` through system-deps on
 /// that target becomes `stdc++.lib`, which does not exist; MSVC records its own
 /// runtime requirements in the generated object files instead.
+#[cfg(all(target_os = "windows", target_env = "msvc"))]
 fn patch_libheif_pkg_config_for_target(libheif_build: &Path) {
-    #[cfg(all(target_os = "windows", target_env = "msvc"))]
-    {
-        let pc_path = libheif_build.join("lib/pkgconfig/libheif.pc");
-        let contents = std::fs::read_to_string(&pc_path)
-            .unwrap_or_else(|err| panic!("failed to read {}: {err}", pc_path.display()));
-        let patched = remove_gnu_cpp_runtime(&contents);
-        std::fs::write(&pc_path, patched)
-            .unwrap_or_else(|err| panic!("failed to write {}: {err}", pc_path.display()));
-    }
+    let pc_path = libheif_build.join("lib/pkgconfig/libheif.pc");
+    let contents = std::fs::read_to_string(&pc_path)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", pc_path.display()));
+    let patched = remove_gnu_cpp_runtime(&contents);
+    std::fs::write(&pc_path, patched)
+        .unwrap_or_else(|err| panic!("failed to write {}: {err}", pc_path.display()));
 }
 
+#[cfg(all(target_os = "windows", target_env = "msvc"))]
 fn remove_gnu_cpp_runtime(contents: &str) -> String {
     contents
         .lines()
