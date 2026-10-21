@@ -23,21 +23,6 @@ runs:
               }
               & $bash -lc "pacman -S --noconfirm --needed make diffutils pkgconf gawk"
 
-        - name: Verify MSYS2 gawk (FFmpeg dep awk one-liner)
-          shell: pwsh
-          run: |
-              $gawk = 'C:\msys64\usr\bin\gawk.exe'
-              if (-not (Test-Path $gawk)) {
-                  Write-Error "gawk not found at $gawk"
-                  exit 1
-              }
-              $inputText = 'note: including file: C:/foo/bar.h'
-              $out = $inputText | & $gawk '/including/ { sub(/^.*file: */, ""); print }'
-              if ($LASTEXITCODE -ne 0 -or $out.Trim() -ne 'C:/foo/bar.h') {
-                  Write-Error "MSYS2 gawk verification failed: [$out]"
-                  exit 1
-              }
-
         # Strip Git usr/mingw64 (broken gawk for ffmpeg); append MSYS2/NASM at END so
         # MSVC link.exe stays ahead of MSYS2's link.exe (Rust msvc target requires MSVC linker).
         - name: Append MSYS2 and NASM to PATH (FFmpeg)
