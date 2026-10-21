@@ -31,13 +31,12 @@ runs:
                   Write-Error "gawk not found at $gawk"
                   exit 1
               }
-              $bash = 'C:\msys64\usr\bin\bash.exe'
-              $script = @'
-              set -euo pipefail
-              out=$(printf '%s\n' 'note: including file: C:\foo\bar.h' | gawk '/including/ { sub(/^.*file: */, ""); gsub(/\\/, "/"); print }')
-              test "$out" = 'C:/foo/bar.h'
-              '@
-              $script | & $bash -lc -
+              $inputText = 'note: including file: C:\foo\bar.h'
+              $out = $inputText | & $gawk '/including/ { sub(/^.*file: */, ""); gsub(/\\/, "/"); print }'
+              if ($LASTEXITCODE -ne 0 -or $out.Trim() -ne 'C:/foo/bar.h') {
+                  Write-Error "MSYS2 gawk verification failed: [$out]"
+                  exit 1
+              }
 
         # Strip Git usr/mingw64 (broken gawk for ffmpeg); append MSYS2/NASM at END so
         # MSVC link.exe stays ahead of MSYS2's link.exe (Rust msvc target requires MSVC linker).
