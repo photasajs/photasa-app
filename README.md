@@ -30,6 +30,20 @@ pnpm run build:debug:photasa
 | Rust tests | `cargo test --workspace`                       | —                      |
 | Clippy     | `pnpm run clippy`                              | `pnpm run clippy`      |
 
+### Local platform installers
+
+Run each command on its matching operating system. These commands create unsigned local
+installers and disable Tauri updater artifacts, so no updater private key is required.
+
+| Platform | Root command                   | Bundle output                                            |
+| -------- | ------------------------------ | -------------------------------------------------------- |
+| Windows  | `pnpm run build:local:windows` | NSIS `.exe` in `target/release/bundle/nsis/`             |
+| macOS    | `pnpm run build:local:macos`   | `.app` and `.dmg` in `target/release/bundle/`            |
+| Linux    | `pnpm run build:local:linux`   | AppImage, `.deb`, and `.rpm` in `target/release/bundle/` |
+
+`pnpm run build:photasa` is the production, updater-enabled build. It requires
+`TAURI_SIGNING_PRIVATE_KEY` because Tauri updater artifacts must be signed.
+
 ### Prerequisites
 
 - Node.js **22+** and **pnpm 9**

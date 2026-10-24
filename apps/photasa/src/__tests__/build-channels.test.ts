@@ -8,9 +8,10 @@ const BUILD_CHANNEL = {
     DEV_CONFIG_REL: "src-tauri/tauri.dev.conf.json",
     BASE_CONFIG_REL: "src-tauri/tauri.conf.json",
     PACKAGE_JSON_REL: "package.json",
+    DEV_LAUNCHER_REL: "scripts/tauri-dev.mjs",
     DEV_IDENTIFIER: "me.photasa.app.dev",
     DEV_CONFIG_BASENAME: "tauri.dev.conf.json",
-    DEV_TAURI_SCRIPTS: ["dev", "build:debug"] as const,
+    DEV_TAURI_SCRIPTS: ["build:debug"] as const,
     PROD_CI_SCRIPT: "build:ci",
     PROD_CI_LINUX_SCRIPT: "build:ci:linux",
     DEV_WINDOW_TITLE: "Photasa (Dev)",
@@ -114,6 +115,9 @@ describe("RFC 0157 build channels", () => {
             expect(script, `missing script ${scriptName}`).toBeDefined();
             expect(script).toContain(BUILD_CHANNEL.DEV_CONFIG_BASENAME);
         }
+
+        const launcher = readFileSync(join(packageRoot, BUILD_CHANNEL.DEV_LAUNCHER_REL), "utf8");
+        expect(launcher).toContain(BUILD_CHANNEL.DEV_CONFIG_BASENAME);
     });
 
     it("build:ci stays on prod channel", () => {

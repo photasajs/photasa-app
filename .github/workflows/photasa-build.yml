@@ -5,15 +5,17 @@ on:
         branches: [main, develop]
     workflow_dispatch:
 
-# Flip to "true" to re-enable Windows matrix legs (FFmpeg/libheif native stack).
+# Windows native dependencies are now provisioned by setup-photasa-windows-msvc.
 env:
-    PHOTASA_CI_WINDOWS_ENABLED: "false"
+    PHOTASA_CI_WINDOWS_ENABLED: "true"
 
 jobs:
     check:
         name: Lint & Test (Ubuntu)
         runs-on: ubuntu-latest
-        timeout-minutes: 30
+        # Clippy and tests each compile the embedded FFmpeg/libheif stack.
+        # Cold hosted runners can exceed 30 minutes before tests start.
+        timeout-minutes: 60
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -85,13 +87,35 @@ jobs:
               if: runner.os == 'Windows'
               uses: ./.github/actions/setup-photasa-windows-msvc
 
-            - name: Build Tauri App (Debug Profile)
+            - name: Build Tauri App (Linux Debug Profile)
+              if: runner.os == 'Linux'
               shell: bash
               # Linux: deb only — matrix CI smoke, not release triple-bundle (RFC 0158).
+              run: pnpm --filter @photasa/photasa run build:ci:linux
+
+            - name: Build Tauri App (macOS Debug Profile)
+              if: runner.os == 'macOS'
+              shell: bash
+              run: pnpm --filter @photasa/photasa run build:ci
+
+            # Git Bash prepends its Unix link.exe, which shadows the MSVC linker.
+            - name: Build Tauri App (Windows Debug Profile)
+              if: runner.os == 'Windows'
+              shell: pwsh
               run: |
-                  set -euo pipefail
-                  if [ "${{ runner.os }}" = "Linux" ]; then
-                    pnpm --filter @photasa/photasa run build:ci:linux
-                  else
-                    pnpm --filter @photasa/photasa run build:ci
-                  fi
+                  $linker = (Get-Command link.exe -CommandType Application).Source
+                  if ($linker -match '[/\\]Git[/\\]usr[/\\]bin') {
+                      Write-Error "Git Unix linker shadows MSVC link.exe: $linker"
+                      exit 1
+                  }
+                  Write-Output "Using MSVC linker: $linker"
+                  pnpm --filter @photasa/photasa run build:ci:windows
+
+            - name: Upload Windows installer artifact
+              if: runner.os == 'Windows'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: Photasa-windows-installer-${{ github.sha }}
+                  path: apps/photasa/src-tauri/target/debug/bundle/nsis/*.exe
+                  if-no-files-found: error
+                  retention-days: 14

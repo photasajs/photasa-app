@@ -4,15 +4,19 @@
     "description": "Photasa - Tauri-based photo manager",
     "type": "module",
     "scripts": {
-        "dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
+        "dev": "node ./scripts/tauri-dev.mjs",
         "vite:dev": "vite",
         "vite:build": "vite build",
         "build": "tauri build",
         "build:local": "tauri build -c \"{\\\"bundle\\\":{\\\"createUpdaterArtifacts\\\":false}}\"",
+        "build:local:windows": "tauri build --bundles nsis -c \"{\\\"bundle\\\":{\\\"createUpdaterArtifacts\\\":false}}\"",
+        "build:local:macos": "tauri build --bundles app,dmg -c \"{\\\"bundle\\\":{\\\"createUpdaterArtifacts\\\":false}}\"",
+        "build:local:linux": "tauri build --bundles appimage,deb,rpm -c \"{\\\"bundle\\\":{\\\"createUpdaterArtifacts\\\":false}}\"",
         "build:debug": "tauri build --debug --config src-tauri/tauri.dev.conf.json -c \"{\\\"bundle\\\":{\\\"createUpdaterArtifacts\\\":false}}\"",
         "preview": "vite preview",
         "tauri": "tauri",
         "build:ci": "tauri build --debug -c \"{\\\"bundle\\\":{\\\"createUpdaterArtifacts\\\":false}}\"",
+        "build:ci:windows": "tauri build --debug --bundles nsis -c \"{\\\"bundle\\\":{\\\"createUpdaterArtifacts\\\":false}}\"",
         "build:ci:linux": "tauri build --debug --bundles deb -c \"{\\\"bundle\\\":{\\\"createUpdaterArtifacts\\\":false}}\"",
         "clippy": "cargo clippy --workspace --all-targets --manifest-path ../../Cargo.toml -- -D warnings",
         "lint": "eslint src vite.config.ts vitest.config.ts postcss.config.js tailwind.config.js --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --quiet --cache --cache-location node_modules/.cache/eslint/package",
@@ -25,6 +29,7 @@
         "test:regression:titlebar": "vitest run --config vitest.config.ts src/components/__tests__/titlebar-regression.guard.test.ts src/components/__tests__/TitlebarMac.drag.test.ts"
     },
     "dependencies": {
+        "@photasa/common": "workspace:*",
         "@headlessui/vue": "^1.7.23",
         "@phosphor-icons/vue": "^2.2.1",
         "@photasa/base-tree": "workspace:*",
