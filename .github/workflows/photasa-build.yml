@@ -85,18 +85,29 @@ jobs:
               if: runner.os == 'Windows'
               uses: ./.github/actions/setup-photasa-windows-msvc
 
-            - name: Build Tauri App (Debug Profile)
+            - name: Build Tauri App (Linux Debug Profile)
+              if: runner.os == 'Linux'
               shell: bash
               # Linux: deb only — matrix CI smoke, not release triple-bundle (RFC 0158).
+              run: pnpm --filter @photasa/photasa run build:ci:linux
+
+            - name: Build Tauri App (macOS Debug Profile)
+              if: runner.os == 'macOS'
+              shell: bash
+              run: pnpm --filter @photasa/photasa run build:ci
+
+            # Git Bash prepends its Unix link.exe, which shadows the MSVC linker.
+            - name: Build Tauri App (Windows Debug Profile)
+              if: runner.os == 'Windows'
+              shell: pwsh
               run: |
-                  set -euo pipefail
-                  if [ "${{ runner.os }}" = "Linux" ]; then
-                    pnpm --filter @photasa/photasa run build:ci:linux
-                  elif [ "${{ runner.os }}" = "Windows" ]; then
-                    pnpm --filter @photasa/photasa run build:ci:windows
-                  else
-                    pnpm --filter @photasa/photasa run build:ci
-                  fi
+                  $linker = (Get-Command link.exe -CommandType Application).Source
+                  if ($linker -match '[/\\]Git[/\\]usr[/\\]bin') {
+                      Write-Error "Git Unix linker shadows MSVC link.exe: $linker"
+                      exit 1
+                  }
+                  Write-Output "Using MSVC linker: $linker"
+                  pnpm --filter @photasa/photasa run build:ci:windows
 
             - name: Upload Windows installer artifact
               if: runner.os == 'Windows'
