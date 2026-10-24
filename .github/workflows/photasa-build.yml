@@ -13,7 +13,9 @@ jobs:
     check:
         name: Lint & Test (Ubuntu)
         runs-on: ubuntu-latest
-        timeout-minutes: 30
+        # Clippy and tests each compile the embedded FFmpeg/libheif stack.
+        # Cold hosted runners can exceed 30 minutes before tests start.
+        timeout-minutes: 60
         steps:
             - name: Checkout
               uses: actions/checkout@v7
