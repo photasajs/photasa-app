@@ -86,3 +86,50 @@ export function mergeExpandedKeysForCurrentFolder(
 
     return mergeExpandedKeysForNewFolders(currentExpanded, [normalized], rootPaths);
 }
+
+/**
+ * 从树自身找出到目标节点的祖先 key 链（不含自身）；不依赖 paths，根路径未就绪时仍可展开
+ */
+export function collectAncestorKeysFromTree(
+    folderPath: string,
+    tree: readonly FolderNode[],
+): string[] {
+    const target = canonicalFolderPath(folderPath);
+    if (!target) {
+        return [];
+    }
+
+    const walk = (nodes: readonly FolderNode[], trail: string[]): string[] | null => {
+        for (const node of nodes) {
+            const key = canonicalFolderPath(String(node.key));
+            if (key === target) {
+                return trail;
+            }
+            const found = node.children ? walk(node.children, [...trail, String(node.key)]) : null;
+            if (found) {
+                return found;
+            }
+        }
+        return null;
+    };
+
+    return walk(tree, []) ?? [];
+}
+
+/**
+ * 合并 currentFolder 的祖先展开 key：paths 推导 + 树内实际祖先链
+ */
+export function mergeExpandedKeysForCurrentFolderInTree(
+    currentExpanded: readonly string[],
+    folderPath: string,
+    rootPaths: readonly string[],
+    tree: readonly FolderNode[],
+): string[] {
+    const merged = new Set(
+        mergeExpandedKeysForCurrentFolder(currentExpanded, folderPath, rootPaths),
+    );
+    for (const key of collectAncestorKeysFromTree(folderPath, tree)) {
+        merged.add(key);
+    }
+    return [...merged];
+}

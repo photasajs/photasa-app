@@ -3,6 +3,8 @@ import {
     collectAncestorKeys,
     collectAllFolderKeys,
     mergeExpandedKeysForCurrentFolder,
+    collectAncestorKeysFromTree,
+    mergeExpandedKeysForCurrentFolderInTree,
     mergeExpandedKeysForNewFolders,
 } from "../folder-tree-expand";
 import type { FolderNode } from "@photasa/common";
@@ -68,5 +70,34 @@ describe("folder-tree-expand", () => {
 
     it("collectAllFolderKeys 空树返回空数组", () => {
         expect(collectAllFolderKeys([])).toEqual([]);
+    });
+});
+
+describe("collectAncestorKeysFromTree / mergeExpandedKeysForCurrentFolderInTree", () => {
+    const tree = [
+        {
+            key: "C:/p",
+            title: "p",
+            children: [{ key: "C:/p/a", title: "a", children: [{ key: "C:/p/a/b", title: "b" }] }],
+        },
+        { key: "C:/q", title: "q" },
+    ];
+
+    it("returns ancestor chain from tree without needing paths", () => {
+        const winPath = ["C:", "p", "a", "b"].join(String.fromCharCode(92));
+        expect(collectAncestorKeysFromTree(winPath, tree)).toEqual(["C:/p", "C:/p/a"]);
+    });
+
+    it("returns empty for empty, missing or root targets", () => {
+        expect(collectAncestorKeysFromTree("", tree)).toEqual([]);
+        expect(collectAncestorKeysFromTree("C:/zzz", tree)).toEqual([]);
+        expect(collectAncestorKeysFromTree("C:/q", tree)).toEqual([]);
+    });
+
+    it("merges tree ancestors even when rootPaths is empty", () => {
+        expect(mergeExpandedKeysForCurrentFolderInTree([], "C:/p/a/b", [], tree).sort()).toEqual([
+            "C:/p",
+            "C:/p/a",
+        ]);
     });
 });
