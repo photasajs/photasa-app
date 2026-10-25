@@ -14,6 +14,7 @@
                 v-if="activeMenuKey === menu.key && menu.items"
                 :items="menu.items"
                 class="dropdown-root"
+                @click.stop
                 @menu-action="handleTitlebarMenuAction"
             />
         </div>
@@ -73,9 +74,10 @@ onClickOutside(menuBarRef, () => {
     height: 100%;
     margin: 0 8px;
     position: relative;
-    flex: 1;
+    flex: 0 0 auto;
     min-width: 0;
-    overflow: hidden;
+    /* Dropdowns open below the titlebar and must not be clipped by the bar. */
+    overflow: visible;
     /* RFC 0152: 容器穿透，仅 .menu-item 可点 */
     pointer-events: none;
 }

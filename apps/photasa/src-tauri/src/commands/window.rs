@@ -13,6 +13,12 @@ pub async fn present_main_window<R: tauri::Runtime>(app: &AppHandle<R>) -> Resul
         splash.close().map_err(|e| e.to_string())?;
     }
     if let Some(main) = app.get_webview_window(MAIN_WEBVIEW_LABEL) {
+        #[cfg(not(target_os = "macos"))]
+        {
+            let _ = main.set_decorations(false);
+            #[cfg(target_os = "windows")]
+            let _ = main.set_shadow(true);
+        }
         let _ = main.show();
         let _ = main.set_focus();
     }

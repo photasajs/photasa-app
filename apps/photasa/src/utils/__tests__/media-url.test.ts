@@ -4,6 +4,7 @@ import {
     toFileUrlFromAbsolutePath,
     toWebviewMediaUrl,
     ensureWebviewMediaUrl,
+    isFrontendAssetUrl,
     webviewMediaUrlToAbsolutePath,
     parseAssetWebviewUrl,
     absoluteThumbnailPathForSource,
@@ -61,6 +62,12 @@ describe("absoluteThumbnailPathForSource", () => {
             "/album/.photasaoriginals/thumbnail-vacation.jpg.png",
         );
     });
+
+    it("preserves Windows drive roots when joining media paths", () => {
+        expect(toAbsoluteMediaPath("C:\\Users\\alber\\Pictures", "thumb.png")).toBe(
+            "C:/Users/alber/Pictures/thumb.png",
+        );
+    });
 });
 
 describe("toWebviewMediaUrl", () => {
@@ -108,5 +115,20 @@ describe("ensureWebviewMediaUrl", () => {
         const path = "/Volumes/SUCAI/a.jpg";
         const url = ensureWebviewMediaUrl(`file://${path}`);
         expect(url).toBe(`asset://localhost/${encodeURIComponent(path)}`);
+    });
+
+    it("keeps Vite frontend assets as web URLs in Tauri", async () => {
+        const { isTauri, convertFileSrc } = await import("@tauri-apps/api/core");
+        vi.mocked(isTauri).mockReturnValue(true);
+
+        expect(isFrontendAssetUrl("/src/assets/images/fallback.png")).toBe(true);
+        expect(isFrontendAssetUrl("/assets/fallback-abc123.png")).toBe(true);
+        expect(ensureWebviewMediaUrl("/src/assets/images/fallback.png")).toBe(
+            "/src/assets/images/fallback.png",
+        );
+        expect(ensureWebviewMediaUrl("/assets/fallback-abc123.png")).toBe(
+            "/assets/fallback-abc123.png",
+        );
+        expect(convertFileSrc).not.toHaveBeenCalledWith("/src/assets/images/fallback.png");
     });
 });
