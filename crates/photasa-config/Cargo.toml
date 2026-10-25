@@ -1,6 +1,6 @@
 [package]
 name = "photasa-config"
-version = "2.3.0"
+version = "2.4.0"
 edition = "2021"
 description = "Folder-level .photasa.json read/write (Photasa)"
 license = "MIT"

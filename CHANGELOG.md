@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.4.0](https://github.com/photasajs/photasa-app/compare/v2.3.0...v2.4.0) (2026-08-24)
+
+
+### Features
+
+* **photasa:** complete RFC 0171 Help menu redesign ([d786b54](https://github.com/photasajs/photasa-app/commit/d786b543f957a469c3cdcde3d605545cb9119587))
+* **release:** sign and notarize macOS releases ([0802d32](https://github.com/photasajs/photasa-app/commit/0802d32951789a61d24458d252f7d99841235d69))
+* **rust:** add design-thumbnail crate and RFC 0173 groundwork ([04185bf](https://github.com/photasajs/photasa-app/commit/04185bfa7c635a445ede22c03f1d18686c2ada64))
+
+
+### Bug Fixes
+
+* **photasa:** hide Window Close on macOS to avoid File menu duplicate ([04d53ae](https://github.com/photasajs/photasa-app/commit/04d53ae64cd7c6d740cad071aa26420300a63b61))
+* **photasa:** localize macOS system menu labels for Edit and Window actions. ([fc9a671](https://github.com/photasajs/photasa-app/commit/fc9a671d33e54eb4af3604a3cf8b206393e00743))
+
 ## [2.3.0](https://github.com/photasajs/photasa-app/compare/v2.2.0...v2.3.0) (2026-07-26)
 
 
