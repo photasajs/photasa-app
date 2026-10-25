@@ -182,6 +182,50 @@ describe("useFolderListTreeWatchers (RFC 0165)", () => {
         ctx.wrapper.unmount();
     });
 
+    it("scrolls once when currentFolder node appears after tree already has roots", async () => {
+        const deepPath = `${ROOT}/vacation/2024`;
+        const scrollToNode = vi.fn();
+        const ctx = mountWatchers({
+            folderTree: buildTree(),
+            currentFolder: deepPath,
+        });
+
+        ctx.watchers.folderTreeRef.value = { scrollToNode } as never;
+        await nextTick();
+        await flushPromises();
+        expect(scrollToNode).not.toHaveBeenCalled();
+
+        ctx.folderTree.value = buildTree({ key: deepPath, title: "2024", children: [] });
+        await nextTick();
+        await flushPromises();
+
+        expect(scrollToNode).toHaveBeenCalledTimes(1);
+        expect(scrollToNode).toHaveBeenCalledWith(deepPath, { align: "center", behavior: "auto" });
+        expect(ctx.watchers.expandedKeys.value).toEqual(
+            expect.arrayContaining([ROOT, `${ROOT}/vacation`]),
+        );
+
+        ctx.wrapper.unmount();
+    });
+
+    it("keeps restore pending while tree component is not mounted yet", async () => {
+        const deepPath = `${ROOT}/vacation`;
+        const scrollToNode = vi.fn();
+        const ctx = mountWatchers({ folderTree: buildTree(), currentFolder: deepPath });
+        await nextTick();
+        await flushPromises();
+
+        ctx.watchers.folderTreeRef.value = { scrollToNode } as never;
+        ctx.folderTree.value = [];
+        await nextTick();
+        ctx.folderTree.value = buildTree();
+        await nextTick();
+        await flushPromises();
+
+        expect(scrollToNode).toHaveBeenCalledTimes(1);
+        ctx.wrapper.unmount();
+    });
+
     it("selectedKeys change writes currentFolder and loads folder config", async () => {
         const otherFolder = `${ROOT}/vacation`;
         const ctx = mountWatchers({

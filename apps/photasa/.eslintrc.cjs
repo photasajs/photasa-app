@@ -139,7 +139,10 @@ module.exports = {
     },
     extends: [
         "plugin:vue/vue3-essential",
-        "@vue/typescript/recommended",
+        // The package's legacy `/recommended` subpath is not exported by all
+        // supported @vue/eslint-config-typescript releases. Use its public
+        // package entrypoint so clean CI installs resolve consistently.
+        "@vue/eslint-config-typescript",
         "plugin:prettier/recommended",
     ],
     parserOptions: {

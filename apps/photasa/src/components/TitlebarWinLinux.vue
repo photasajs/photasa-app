@@ -1,10 +1,13 @@
 <template>
-    <header class="app-header drag-region" data-tauri-drag-region>
-        <!-- 应用图标（主题自适应） -->
-        <AppIcon />
-        <!-- 标题 -->
-        <span class="title-text" data-tauri-drag-region>{{ t("app.title") }}</span>
+    <header class="app-header">
+        <div class="titlebar-drag-handle drag-region" data-tauri-drag-region>
+            <!-- 应用图标（主题自适应） -->
+            <AppIcon />
+            <!-- 标题 -->
+            <span class="title-text">{{ t("app.title") }}</span>
+        </div>
         <TitlebarMenuBar class="no-drag-region" />
+        <div class="titlebar-drag-spacer drag-region" data-tauri-drag-region />
         <!-- 设置按钮区（no-drag） -->
 
         <!-- 窗口控制按钮区（no-drag） -->
@@ -159,6 +162,13 @@ onBeforeUnmount(() => {
 }
 .drag-region {
     -webkit-app-region: drag;
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+.titlebar-drag-spacer {
+    min-width: 0;
+    height: 100%;
 }
 .no-drag-region {
     -webkit-app-region: no-drag;

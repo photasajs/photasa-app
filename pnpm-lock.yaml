@@ -41,6 +41,9 @@ importers:
       '@photasa/base-tree':
         specifier: workspace:*
         version: link:../../packages/@photasa/base-tree
+      '@photasa/common':
+        specifier: workspace:*
+        version: link:../../packages/@photasa/common
       '@systembug/diting':
         specifier: ^0.0.7
         version: 0.0.7

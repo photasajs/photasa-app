@@ -8,7 +8,7 @@ import type { usePreferenceStore } from "@renderer/stores/preference";
 import type { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import {
     collectAllFolderKeys,
-    mergeExpandedKeysForCurrentFolder,
+    mergeExpandedKeysForCurrentFolderInTree,
     mergeExpandedKeysForNewFolders,
 } from "@renderer/utils/folder-tree-expand";
 import { canonicalFolderPath } from "@renderer/utils/folder-tree-path";
@@ -45,7 +45,7 @@ export interface UseFolderListTreeWatchersResult {
  * 职责拆分：
  * - folderTree 深监听：新子目录展开 + 补 currentFolder 祖先（禁止 scrollToNode）
  * - currentFolder/paths：展开、选中、一次性启动滚动
- * - folderTree.length 0→N：folderTree 晚到时补一次滚动
+ * - folderTree.length 0→N / 目标节点出现：folderTree 晚到时补一次滚动
  * - selectedKeys：写回 currentFolder 并加载配置
  */
 export function useFolderListTreeWatchers(
@@ -53,10 +53,11 @@ export function useFolderListTreeWatchers(
 ): UseFolderListTreeWatchersResult {
     const { folderTree, paths, currentFolder, preferenceStore, weiZheng } = options;
 
-    const expandedKeys = ref<string[]>([...paths.value]);
+    const expandedKeys = ref<string[]>(paths.value.map(canonicalFolderPath).filter(Boolean));
     const selectedKeys = ref<string[]>([]);
     const folderTreeRef = ref<InstanceType<typeof BaseTree> | null>(null);
     const didRestoreScrollIntoView = ref(false);
+    let scrollRestoreInFlight = false;
     const knownFolderKeys = ref<Set<string>>(new Set(collectAllFolderKeys(folderTree.value)));
 
     function markTreeScrollRestoreComplete(): void {
@@ -76,7 +77,7 @@ export function useFolderListTreeWatchers(
     }
 
     async function scrollRestoredFolderIntoViewOnce(folderPath: string): Promise<void> {
-        if (!canAttemptScrollRestore(didRestoreScrollIntoView.value)) {
+        if (scrollRestoreInFlight || !canAttemptScrollRestore(didRestoreScrollIntoView.value)) {
             return;
         }
 
@@ -85,9 +86,19 @@ export function useFolderListTreeWatchers(
             return;
         }
 
-        await nextTick();
-        folderTreeRef.value?.scrollToNode(normalized, { align: "center", behavior: "auto" });
-        markTreeScrollRestoreComplete();
+        scrollRestoreInFlight = true;
+        try {
+            await nextTick();
+            const tree = folderTreeRef.value;
+            if (!tree) {
+                // 树组件尚未挂载：保持未完成，待目标节点出现或树填充时再补一次
+                return;
+            }
+            tree.scrollToNode(normalized, { align: "center", behavior: "auto" });
+            markTreeScrollRestoreComplete();
+        } finally {
+            scrollRestoreInFlight = false;
+        }
     }
 
     function syncTreeViewForCurrentFolder(folderPath: string): void {
@@ -96,10 +107,11 @@ export function useFolderListTreeWatchers(
             return;
         }
 
-        expandedKeys.value = mergeExpandedKeysForCurrentFolder(
+        expandedKeys.value = mergeExpandedKeysForCurrentFolderInTree(
             expandedKeys.value,
             normalized,
             paths.value,
+            folderTree.value,
         );
         selectFolder(normalized);
         void scrollRestoredFolderIntoViewOnce(normalized);
@@ -126,10 +138,11 @@ export function useFolderListTreeWatchers(
                 return;
             }
 
-            expandedKeys.value = mergeExpandedKeysForCurrentFolder(
+            expandedKeys.value = mergeExpandedKeysForCurrentFolderInTree(
                 expandedKeys.value,
                 folder,
                 paths.value,
+                newTree,
             );
         },
         { deep: true },
@@ -146,7 +159,7 @@ export function useFolderListTreeWatchers(
                 syncTreeViewForCurrentFolder(newFolder);
             }
         },
-        { immediate: true },
+        { immediate: true, deep: true },
     );
 
     watch(
@@ -157,6 +170,16 @@ export function useFolderListTreeWatchers(
                 return;
             }
             void scrollRestoredFolderIntoViewOnce(folder);
+        },
+    );
+
+    /** currentFolder 对应节点晚到（子树后扫描出）时，补一次启动滚动；门禁保证只滚一次 */
+    watch(
+        () => isFolderPresentInTree(currentFolder.value, folderTree.value),
+        (present) => {
+            if (present) {
+                void scrollRestoredFolderIntoViewOnce(currentFolder.value);
+            }
         },
     );
 
